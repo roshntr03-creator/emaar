@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>نظام محاسبة للمقاولات</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gantt-task-react@0.3.9/dist/index.css">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Tajawal', 'sans-serif'],
+            },
+          }
+        }
+      }
+    </script>
+    <!-- Dependencies for the app:
+      - react
+      - react-dom
+      - react-router-dom
+      - recharts
+      - lucide-react (for icons)
+      - jspdf & jspdf-autotable (for PDF export)
+      To run locally, you would need to install these:
+      npm install react react-dom react-router-dom recharts lucide-react jspdf jspdf-autotable
+      npm install --save-dev @types/react @types/react-dom
+    -->
+    <style>
+      @media print {
+        body * {
+          visibility: hidden;
+        }
+        #print-area, #print-area * {
+          visibility: visible;
+        }
+        #print-area {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+        }
+        @page {
+            size: A4;
+            margin: 20mm;
+        }
+      }
+
+      @keyframes modal-pop {
+        0% {
+          transform: scale(0.95);
+          opacity: 0;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+      .modal-content-pop {
+        animation: modal-pop 0.3s ease-out forwards;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@18.2.0/",
+    "react": "https://esm.sh/react@18.2.0",
+    "lucide-react": "https://esm.sh/lucide-react@0.540.0?deps=react@18.2.0",
+    "recharts": "https://esm.sh/recharts@2.12.7?deps=react@18.2.0",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+    "react-dom/": "https://esm.sh/react-dom@18.2.0/",
+    "react-dom": "https://esm.sh/react-dom@18.2.0",
+    "react-router-dom": "https://esm.sh/react-router-dom@6.23.0?deps=react@18.2.0",
+    "@google/genai": "https://esm.sh/@google/genai@1.14.0",
+    "jspdf": "https://esm.sh/jspdf@2.5.1",
+    "jspdf-autotable": "https://esm.sh/jspdf-autotable@3.8.2",
+    "gantt-task-react": "https://esm.sh/gantt-task-react@0.3.9?deps=react@18.2.0",
+    "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+    "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js",
+    "firebase/storage": "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js",
+    "firebase/": "https://esm.sh/firebase@^12.1.0/"
+  }
+}
+</script>
+</head>
+  <body class="bg-gray-100">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
