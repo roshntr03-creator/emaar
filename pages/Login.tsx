@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building, Mail, Lock } from 'lucide-react';
+import { Building, Mail, Lock, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const Login: React.FC = () => {
@@ -80,7 +80,14 @@ const Login: React.FC = () => {
                 />
                </div>
             </div>
-            {error && <p className="text-sm text-center text-red-600 bg-red-50 p-3 rounded-md border border-red-200">{error}</p>}
+            {error && (
+              <div className="flex items-start p-4 text-sm text-red-800 bg-red-50 rounded-lg border border-red-200" role="alert">
+                  <AlertTriangle className="flex-shrink-0 w-5 h-5 ml-3" />
+                  <div className="flex-1">
+                      <p>{error}</p>
+                  </div>
+              </div>
+            )}
             
             <div>
               <button
