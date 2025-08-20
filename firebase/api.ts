@@ -9,7 +9,7 @@ import type {
     Project, Client, Supplier, Invoice, Account, JournalVoucher, PurchaseOrder, InventoryItem, 
     User, Employee, PayrollRun, Voucher, ChangeOrder, Custody, BudgetLine, SupplierBill,
     ProjectTask, Subcontract, SubcontractorPayment, SettingsData, AllRolesPermissions, Attachment,
-    ProjectFinancialTransaction, FinancialOverviewData
+    ProjectFinancialTransaction, FinancialOverviewData, Asset, Document
 } from '../types';
 
 // --- Generic Helpers ---
@@ -412,6 +412,52 @@ export const deleteAttachment = async (id: string): Promise<void> => {
     }
     // Then, delete the metadata document from Firestore
     await deleteDocumentData('attachments', id);
+};
+
+// --- Assets ---
+export const getAssets = (): Promise<Asset[]> => getCollectionData('assets');
+export const addAsset = (data: Omit<Asset, 'id'>): Promise<Asset> => addDocumentData('assets', data);
+export const updateAsset = (data: Asset): Promise<Asset> => updateDocumentData('assets', data);
+export const deleteAsset = (id: string): Promise<void> => deleteDocumentData('assets', id);
+
+// --- Documents ---
+export const getDocuments = (): Promise<Document[]> => getCollectionData('documents');
+
+export const addDocument = async (file: File, data: Omit<Document, 'id' | 'fileName' | 'fileType' | 'fileSize' | 'url' | 'uploadedAt' | 'storagePath'>): Promise<Document> => {
+    const firebase = initializeFirebase();
+    if (!firebase) throw new Error("Firebase not initialized");
+
+    const storagePath = `documents/${Date.now()}_${file.name}`;
+    const storageRef = ref(firebase.storage, storagePath);
+    
+    const snapshot = await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(snapshot.ref);
+
+    const documentData: Omit<Document, 'id'> = {
+        ...data,
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+        url: downloadURL,
+        storagePath: snapshot.ref.fullPath,
+        uploadedAt: new Date().toISOString()
+    };
+
+    return await addDocumentData('documents', documentData);
+};
+
+export const updateDocument = (data: Document): Promise<Document> => updateDocumentData('documents', data);
+
+export const deleteDocument = async (id: string): Promise<void> => {
+    const firebase = initializeFirebase();
+    if (!firebase) throw new Error("Firebase not initialized");
+
+    const docToDelete = await getDocumentData<Document>('documents', id);
+    if (docToDelete && docToDelete.storagePath) {
+        const storageRef = ref(firebase.storage, docToDelete.storagePath);
+        await deleteObject(storageRef).catch(error => console.error("Error deleting file from storage:", error));
+    }
+    await deleteDocumentData('documents', id);
 };
 
 

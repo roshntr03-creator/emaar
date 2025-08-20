@@ -227,6 +227,44 @@ export interface Attachment {
   uploadedAt: string;
 }
 
+export interface Asset {
+  id: string;
+  assetCode: string;
+  name: string;
+  category: string;
+  purchaseDate: string;
+  purchaseCost: number;
+  currentValue: number;
+  status: 'available' | 'in_use' | 'under_maintenance' | 'sold';
+  assignedProjectName: string | null;
+  lastMaintenanceDate: string | null;
+  nextMaintenanceDate: string | null;
+}
+
+export type LinkedEntityType = 'project' | 'client' | 'supplier' | 'invoice' | 'purchaseOrder' | 'subcontract' | 'asset' | 'employee';
+
+export interface LinkedEntity {
+  type: LinkedEntityType;
+  id: string;
+  name: string;
+}
+
+export interface Document {
+  id: string;
+  title: string;
+  description: string;
+  category: 'عقد' | 'فاتورة' | 'مخطط هندسي' | 'خطاب رسمي' | 'صورة' | 'آخر';
+  tags: string[];
+  linkedEntities: LinkedEntity[];
+  // File information is embedded
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  url: string; // dataURL for local, downloadURL for firebase
+  storagePath?: string; // Only for firebase
+  uploadedAt: string;
+}
+
 
 // --- AI Features ---
 export interface ProjectCostEstimate {
@@ -239,6 +277,12 @@ export interface ProjectCostEstimate {
   assumptions: string[];
   confidenceScore: number; // 0-100
   suggestedProjectName: string;
+}
+
+export interface AiDepreciationEstimate {
+  annualDepreciation: number;
+  salvageValue: number;
+  explanation: string;
 }
 
 // --- Refactored Project Financials ---

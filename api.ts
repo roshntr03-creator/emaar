@@ -3,7 +3,7 @@ import type {
     Project, Client, Supplier, Invoice, Account, JournalVoucher, PurchaseOrder, InventoryItem, 
     User, Employee, PayrollRun, Voucher, ChangeOrder, Custody, BudgetLine, SupplierBill,
     ProjectTask, Subcontract, SubcontractorPayment, SettingsData, AllRolesPermissions, Attachment,
-    ProjectFinancialTransaction, FinancialOverviewData
+    ProjectFinancialTransaction, FinancialOverviewData, Asset, Document
 } from './types';
 
 const LATENCY = 300; // ms
@@ -141,6 +141,18 @@ export const deleteSubcontractorPayment = async (id: string): Promise<void> => s
 export const getAttachments = async (relatedId: string, relatedType: string): Promise<Attachment[]> => simulateNetwork(db.getAttachments(relatedId, relatedType));
 export const addAttachment = async (file: File, relatedId: string, relatedType: string): Promise<Attachment> => db.addAttachment(file, relatedId, relatedType); // No latency simulation for file ops
 export const deleteAttachment = async (id: string): Promise<void> => simulateNetwork(db.deleteAttachment(id));
+
+// --- Assets ---
+export const getAssets = async (): Promise<Asset[]> => simulateNetwork(db.getAssets());
+export const addAsset = async (data: Omit<Asset, 'id'>): Promise<Asset> => simulateNetwork(db.addAsset(data));
+export const updateAsset = async (data: Asset): Promise<Asset | null> => simulateNetwork(db.updateAsset(data));
+export const deleteAsset = async (id: string): Promise<void> => simulateNetwork(db.deleteAsset(id));
+
+// --- Documents ---
+export const getDocuments = async (): Promise<Document[]> => simulateNetwork(db.getDocuments());
+export const addDocument = async (file: File, data: Omit<Document, 'id' | 'fileName' | 'fileType' | 'fileSize' | 'url' | 'uploadedAt' | 'storagePath'>): Promise<Document> => db.addDocument(file, data); // No latency simulation for file ops
+export const updateDocument = async (data: Document): Promise<Document | null> => simulateNetwork(db.updateDocument(data));
+export const deleteDocument = async (id: string): Promise<void> => simulateNetwork(db.deleteDocument(id));
 
 // --- Settings ---
 export const getSettings = async (): Promise<SettingsData> => simulateNetwork(db.getSettings());

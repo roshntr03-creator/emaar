@@ -26,6 +26,8 @@ const pageTitles: { [key: string]: string } = {
   '/change-orders': 'تغيير الطلبات',
   '/custody': 'العهدة',
   '/vouchers': 'السندات',
+  '/assets': 'إدارة الأصول',
+  '/documents': 'مستودع المستندات',
   '/diagnostics': 'التشخيص',
   '/settings': 'الإعدادات',
 };

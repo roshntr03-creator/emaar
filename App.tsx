@@ -29,6 +29,8 @@ import Settings from './pages/Settings';
 import Users from './pages/Users';
 import Subcontracts from './pages/Subcontracts';
 import SubcontractDetail from './pages/SubcontractDetail';
+import Assets from './pages/Assets';
+import Documents from './pages/Documents';
 
 const App: React.FC = () => {
   return (
@@ -59,6 +61,8 @@ const App: React.FC = () => {
                 <Route path="/change-orders" element={<ChangeOrders />} />
                 <Route path="/custody" element={<Custody />} />
                 <Route path="/vouchers" element={<Vouchers />} />
+                <Route path="/assets" element={<Assets />} />
+                <Route path="/documents" element={<Documents />} />
                 <Route path="/diagnostics" element={<Diagnostics />} />
                 <Route path="/settings" element={<Settings />} />
               </Route>

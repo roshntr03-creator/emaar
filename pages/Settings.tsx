@@ -30,6 +30,8 @@ const permissionConfig: { [module: string]: { label: string; actions: { key: Per
     suppliers: { label: 'الموردون', actions: [{key: 'view', label: 'عرض'}, {key: 'create', label: 'إنشاء'}, {key: 'edit', label: 'تعديل'}, {key: 'delete', label: 'حذف'}] },
     projects: { label: 'المشاريع', actions: [{key: 'view', label: 'عرض'}, {key: 'create', label: 'إنشاء'}, {key: 'edit', label: 'تعديل'}, {key: 'delete', label: 'حذف'}] },
     subcontracts: { label: 'عقود الباطن', actions: [{key: 'view', label: 'عرض'}, {key: 'create', label: 'إنشاء'}, {key: 'edit', label: 'تعديل'}, {key: 'delete', label: 'حذف'}] },
+    assets: { label: 'إدارة الأصول', actions: [{key: 'view', label: 'عرض'}, {key: 'create', label: 'إنشاء'}, {key: 'edit', label: 'تعديل'}, {key: 'delete', label: 'حذف'}] },
+    documents: { label: 'مستودع المستندات', actions: [{key: 'view', label: 'عرض'}, {key: 'create', label: 'إنشاء'}, {key: 'edit', label: 'تعديل'}, {key: 'delete', label: 'حذف'}] },
     chartOfAccounts: { label: 'دليل الحسابات', actions: [{key: 'view', label: 'عرض'}, {key: 'create', label: 'إنشاء'}, {key: 'edit', label: 'تعديل'}, {key: 'delete', label: 'حذف'}] },
     purchaseOrders: { label: 'أوامر الشراء', actions: [{key: 'view', label: 'عرض'}, {key: 'create', label: 'إنشاء'}, {key: 'edit', label: 'تعديل'}, {key: 'delete', label: 'حذف'}] },
     invoices: { label: 'فواتير العملاء', actions: [{key: 'view', label: 'عرض'}, {key: 'create', label: 'إنشاء'}, {key: 'edit', label: 'تعديل'}, {key: 'delete', label: 'حذف'}] },

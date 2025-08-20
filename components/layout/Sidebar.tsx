@@ -4,7 +4,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
     LayoutDashboard, Briefcase, Users, User, Building, FileText, ShoppingCart, Warehouse, Book, 
-    Contact, DollarSign, Repeat, HandCoins, Receipt, HeartPulse, Settings, FileSpreadsheet, ClipboardSignature, FileArchive
+    Contact, DollarSign, Repeat, HandCoins, Receipt, HeartPulse, Settings, FileSpreadsheet, ClipboardSignature, FileArchive, Truck, FolderArchive
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -46,6 +46,8 @@ const Sidebar: React.FC = () => {
     { to: '/supplier-bills', icon: <FileArchive size={20} />, label: 'فواتير الموردين', module: 'supplierBills' },
     { to: '/purchase-orders', icon: <ShoppingCart size={20} />, label: 'أوامر الشراء', module: 'purchaseOrders' },
     { to: '/subcontracts', icon: <ClipboardSignature size={20} />, label: 'عقود الباطن', module: 'subcontracts' },
+    { to: '/assets', icon: <Truck size={20} />, label: 'إدارة الأصول', module: 'assets' },
+    { to: '/documents', icon: <FolderArchive size={20} />, label: 'مستودع المستندات', module: 'documents' },
     { to: '/vouchers', icon: <Receipt size={20} />, label: 'السندات', module: 'vouchers' },
     { to: '/employees', icon: <Contact size={20} />, label: 'الموظفون', module: 'employees' },
     { to: '/payroll', icon: <DollarSign size={20} />, label: 'الرواتب', module: 'payroll' },
