@@ -164,14 +164,19 @@ class Database {
     try {
       const storedData = localStorage.getItem(this.storageKey);
       if (storedData) {
-        this._data = JSON.parse(storedData);
+        const parsedData = JSON.parse(storedData);
+        // Merge with a deep copy of seed data to ensure all keys are present.
+        // This prevents errors if the stored data is from an older schema.
+        this._data = { ...JSON.parse(JSON.stringify(seedData)), ...parsedData };
       } else {
-        this._data = JSON.parse(JSON.stringify(seedData)); // Deep copy to avoid mutation
-        this._save();
+        this._data = JSON.parse(JSON.stringify(seedData)); // Deep copy for new DB
       }
+      // Always save back, to upgrade the stored schema if necessary
+      this._save(); 
     } catch (error) {
-      console.error("Error initializing database:", error);
+      console.error("Error initializing database, falling back to seed data:", error);
       this._data = JSON.parse(JSON.stringify(seedData));
+      this._save();
     }
   }
 
