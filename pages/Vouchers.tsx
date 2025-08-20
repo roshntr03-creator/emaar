@@ -119,9 +119,9 @@ const Vouchers: React.FC = () => {
 
   const filteredVouchers = useMemo(() =>
     vouchers.filter(v =>
-      (v.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      v.person.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      v.description.toLowerCase().includes(searchQuery.toLowerCase())) &&
+      ((v.id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (v.person || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (v.description || '').toLowerCase().includes(searchQuery.toLowerCase())) &&
       (filters.type === 'all' || v.type === filters.type) &&
       (filters.status === 'all' || v.status === filters.status)
     ), [vouchers, searchQuery, filters]);

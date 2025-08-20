@@ -179,8 +179,8 @@ const Invoices: React.FC = () => {
 
   const filteredInvoices = useMemo(() => 
     invoices.filter(invoice =>
-      (invoice.project.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      invoice.id.toLowerCase().includes(searchQuery.toLowerCase())) &&
+      ((invoice.project || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (invoice.id || '').toLowerCase().includes(searchQuery.toLowerCase())) &&
       (statusFilter === 'all' || invoice.status === statusFilter)
     ), [invoices, searchQuery, statusFilter]
   );

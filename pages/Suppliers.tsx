@@ -86,9 +86,9 @@ const Suppliers: React.FC = () => {
 
   const filteredSuppliers = useMemo(() => 
     suppliers.filter(supplier =>
-      supplier.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      supplier.contactPerson.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      supplier.service.toLowerCase().includes(searchQuery.toLowerCase())
+      (supplier.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (supplier.contactPerson || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (supplier.service || '').toLowerCase().includes(searchQuery.toLowerCase())
     ), [suppliers, searchQuery]
   );
 

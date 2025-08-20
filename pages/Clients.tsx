@@ -86,8 +86,8 @@ const Clients: React.FC = () => {
 
   const filteredClients = useMemo(() => 
     clients.filter(client =>
-      client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.contactPerson.toLowerCase().includes(searchQuery.toLowerCase())
+      (client.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (client.contactPerson || '').toLowerCase().includes(searchQuery.toLowerCase())
     ), [clients, searchQuery]
   );
   

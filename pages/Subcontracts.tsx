@@ -138,8 +138,8 @@ const Subcontracts: React.FC = () => {
   
   const filteredSubcontracts = useMemo(() =>
     subcontracts.filter(sub =>
-      (sub.projectName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-       sub.subcontractorName.toLowerCase().includes(searchQuery.toLowerCase())) &&
+      ((sub.projectName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+       (sub.subcontractorName || '').toLowerCase().includes(searchQuery.toLowerCase())) &&
       (statusFilter === 'all' || sub.status === statusFilter)
     ), [subcontracts, searchQuery, statusFilter]);
 

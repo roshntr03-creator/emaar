@@ -159,9 +159,9 @@ const PurchaseOrders: React.FC = () => {
   
   const filteredPOs = useMemo(() => 
     purchaseOrders.filter(po => {
-        const searchMatch = po.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          po.supplierName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          po.projectName.toLowerCase().includes(searchQuery.toLowerCase());
+        const searchMatch = (po.id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (po.supplierName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (po.projectName || '').toLowerCase().includes(searchQuery.toLowerCase());
         const statusMatch = statusFilter === 'all' || po.status === statusFilter;
         return searchMatch && statusMatch;
     }), [purchaseOrders, searchQuery, statusFilter]

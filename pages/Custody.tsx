@@ -121,9 +121,9 @@ const Custody: React.FC = () => {
 
   const filteredCustodies = useMemo(() =>
     custodies.filter(c =>
-      (c.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.projectName?.toLowerCase().includes(searchQuery.toLowerCase())) &&
+      ((c.employeeName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.projectName || '').toLowerCase().includes(searchQuery.toLowerCase())) &&
       (statusFilter === 'all' || c.status === statusFilter)
     ), [custodies, searchQuery, statusFilter]);
 

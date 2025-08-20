@@ -102,9 +102,9 @@ const ChangeOrders: React.FC = () => {
 
   const filteredOrders = useMemo(() =>
     changeOrders.filter(order =>
-      (order.projectName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.id.toLowerCase().includes(searchQuery.toLowerCase())) &&
+      ((order.projectName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (order.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (order.id || '').toLowerCase().includes(searchQuery.toLowerCase())) &&
       (statusFilter === 'all' || order.status === statusFilter)
     ), [changeOrders, searchQuery, statusFilter]);
 

@@ -28,7 +28,7 @@ const filterTree = (tree: Account[], query: string): Account[] => {
     const recursiveFilter = (accounts: Account[]): Account[] => {
         return accounts.reduce<Account[]>((acc, account) => {
             const children = account.children ? recursiveFilter(account.children) : [];
-            const isMatch = account.name.toLowerCase().includes(lowerCaseQuery) || account.code.includes(lowerCaseQuery);
+            const isMatch = (account.name || '').toLowerCase().includes(lowerCaseQuery) || (account.code || '').includes(lowerCaseQuery);
             if (isMatch || children.length > 0) {
                 acc.push({ ...account, children });
             }

@@ -112,8 +112,8 @@ const Users: React.FC = () => {
 
   const filteredUsers = useMemo(() =>
     users.filter(user =>
-      (user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())) &&
+      ((user.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (user.email || '').toLowerCase().includes(searchQuery.toLowerCase())) &&
       (filters.role === 'all' || user.role === filters.role) &&
       (filters.status === 'all' || user.status === filters.status)
     ), [users, searchQuery, filters]

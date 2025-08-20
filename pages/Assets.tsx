@@ -166,8 +166,8 @@ const Assets: React.FC = () => {
 
   const filteredAssets = useMemo(() =>
     assets.filter(a =>
-      (a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-       a.assetCode.toLowerCase().includes(searchQuery.toLowerCase())) &&
+      ((a.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+       (a.assetCode || '').toLowerCase().includes(searchQuery.toLowerCase())) &&
       (statusFilter === 'all' || a.status === statusFilter)
     ), [assets, searchQuery, statusFilter]);
 
@@ -292,14 +292,23 @@ const Assets: React.FC = () => {
               <input type="number" value={estimationLife} onChange={e => setEstimationLife(Number(e.target.value))} className="w-full px-3 py-2 border rounded-md" />
             </div>
             <button onClick={handleGenerateEstimate} disabled={isEstimating} className="w-full flex justify-center items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-indigo-400">
-              {isEstimating ? <Loader2 className="animate-spin"/> : 'حساب'}
+              {isEstimating ? <Loader2 className="animate-spin" /> : "تقدير الإهلاك"}
             </button>
-            {estimationError && <p className="text-sm text-red-600">{estimationError}</p>}
+            {estimationError && <p className="text-sm text-red-600 mt-2">{estimationError}</p>}
             {estimationResult && (
-                <div className="p-4 bg-gray-50 rounded-lg space-y-2">
-                    <div className="flex justify-between"><span className="text-gray-600">الإهلاك السنوي:</span><span className="font-bold">﷼{estimationResult.annualDepreciation.toLocaleString()}</span></div>
-                    <div className="flex justify-between"><span className="text-gray-600">القيمة التخريدية المقدرة:</span><span className="font-bold">﷼{estimationResult.salvageValue.toLocaleString()}</span></div>
-                    <p className="text-xs text-gray-500 pt-2 border-t">{estimationResult.explanation}</p>
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
+                    <h4 className="font-semibold mb-2">نتائج التقدير:</h4>
+                    <p className="text-sm text-gray-700 mb-2">{estimationResult.explanation}</p>
+                    <div className="grid grid-cols-2 gap-2 text-center">
+                        <div className="p-2 bg-blue-100 rounded">
+                            <p className="text-xs text-blue-800">الإهلاك السنوي</p>
+                            <p className="font-bold text-blue-800">﷼{estimationResult.annualDepreciation.toLocaleString()}</p>
+                        </div>
+                        <div className="p-2 bg-green-100 rounded">
+                            <p className="text-xs text-green-800">القيمة التخريدية</p>
+                            <p className="font-bold text-green-800">﷼{estimationResult.salvageValue.toLocaleString()}</p>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

@@ -101,9 +101,9 @@ const Employees: React.FC = () => {
 
   const filteredEmployees = useMemo(() =>
     employees.filter(emp =>
-      (emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      emp.jobTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      emp.department.toLowerCase().includes(searchQuery.toLowerCase())) &&
+      ((emp.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (emp.jobTitle || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (emp.department || '').toLowerCase().includes(searchQuery.toLowerCase())) &&
       (statusFilter === 'all' || emp.status === statusFilter)
     ), [employees, searchQuery, statusFilter]
   );

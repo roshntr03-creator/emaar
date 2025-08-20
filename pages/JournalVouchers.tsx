@@ -224,7 +224,7 @@ const JournalVouchers: React.FC = () => {
         if (error instanceof Error && error.message.includes('API key not valid')) {
             setAiError("مفتاح API غير صالح. يرجى التحقق منه في صفحة الإعدادات.");
         } else {
-            setAiError("حدث خطأ أثناء التواصل مع الذكاء الاصطناعي. يرجى المحاولة مرة أخرى.");
+            setAiError("حدث خطأ أثناء التواصل עם الذكاء الاصطناعي. يرجى المحاولة مرة أخرى.");
         }
     } finally {
         setIsAiLoading(false);
@@ -234,8 +234,8 @@ const JournalVouchers: React.FC = () => {
 
   const filteredVouchers = useMemo(() => 
     vouchers.filter(v =>
-      (v.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      v.id.toLowerCase().includes(searchQuery.toLowerCase())) &&
+      ((v.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (v.id || '').toLowerCase().includes(searchQuery.toLowerCase())) &&
       (statusFilter === 'all' || v.status === statusFilter)
     ), [vouchers, searchQuery, statusFilter]
   );

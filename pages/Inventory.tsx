@@ -88,9 +88,9 @@ const Inventory: React.FC = () => {
 
   const filteredInventory = useMemo(() =>
     inventory.filter(item =>
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.category.toLowerCase().includes(searchQuery.toLowerCase())
+      (item.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (item.id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (item.category || '').toLowerCase().includes(searchQuery.toLowerCase())
     ), [inventory, searchQuery]
   );
   
