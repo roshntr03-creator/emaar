@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import { DollarSign, Briefcase, Users, FileText, ShoppingCart, Book, BrainCircuit, Loader2, KeyRound } from 'lucide-react';
@@ -8,6 +9,7 @@ import * as localApi from '../api';
 import * as firebaseApi from '../firebase/api';
 import { isFirebaseConfigured } from '../firebase/config';
 import type { Project, Invoice, Client } from '../types';
+import { useApiKey } from '../contexts/ApiKeyContext';
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B'];
 
@@ -15,6 +17,7 @@ const Dashboard: React.FC = () => {
   const [summary, setSummary] = useState('');
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
   const [summaryError, setSummaryError] = useState('');
+  const { apiKey } = useApiKey();
 
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -105,6 +108,12 @@ const Dashboard: React.FC = () => {
       setSummaryError('');
       setSummary('');
 
+      if (!apiKey) {
+        setSummaryError("الرجاء إعداد مفتاح Google AI API في صفحة الإعدادات لتفعيل هذه الميزة.");
+        setIsLoadingSummary(false);
+        return;
+      }
+
       const dataForAI = {
           totalRevenue: dashboardData.totalRevenue,
           activeProjects: dashboardData.activeProjects,
@@ -115,7 +124,7 @@ const Dashboard: React.FC = () => {
       };
 
       try {
-          const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+          const ai = new GoogleGenAI({ apiKey });
           const prompt = `
           أنت مستشار مالي استراتيجي (CFO) لشركة مقاولات في المملكة العربية السعودية. مهمتك هي تحليل البيانات المالية التالية وكتابة ملخص تنفيذي موجز ومؤثر لمدير الشركة.
 
@@ -139,7 +148,11 @@ const Dashboard: React.FC = () => {
 
       } catch (error) {
           console.error("Error generating summary:", error);
-          setSummaryError("عذراً، حدث خطأ أثناء إنشاء الملخص. يرجى المحاولة مرة أخرى.");
+          if (error instanceof Error && error.message.includes('API key not valid')) {
+            setSummaryError("مفتاح API غير صالح. يرجى التحقق منه في صفحة الإعدادات.");
+          } else {
+            setSummaryError("عذراً، حدث خطأ أثناء إنشاء الملخص. يرجى المحاولة مرة أخرى.");
+          }
       } finally {
           setIsLoadingSummary(false);
       }

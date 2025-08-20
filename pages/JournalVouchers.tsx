@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import type { JournalVoucher, JournalVoucherLine, Account } from '../types';
@@ -7,6 +8,7 @@ import * as localApi from '../api';
 import * as firebaseApi from '../firebase/api';
 import { isFirebaseConfigured } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
+import { useApiKey } from '../contexts/ApiKeyContext';
 
 const getStatusChip = (status: 'posted' | 'draft') => {
   switch (status) {
@@ -27,6 +29,7 @@ const JournalVouchers: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | JournalVoucher['status']>('all');
   const { hasPermission } = useAuth();
+  const { apiKey } = useApiKey();
   
   const [aiPrompt, setAiPrompt] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
@@ -155,6 +158,10 @@ const JournalVouchers: React.FC = () => {
   };
   
   const handleAiGenerate = async () => {
+    if (!apiKey) {
+        setAiError('الرجاء إعداد مفتاح Google AI API في صفحة الإعدادات.');
+        return;
+    }
     if (!aiPrompt) {
         setAiError('الرجاء إدخال وصف للعملية المالية.');
         return;
@@ -166,7 +173,7 @@ const JournalVouchers: React.FC = () => {
     const chartOfAccountsForAI = accounts.map(({ id, code, name, type }) => ({ id, code, name, type }));
 
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey });
         const prompt = `
             أنت خبير محاسبة في شركة مقاولات سعودية. مهمتك هي تحليل الوصف التالي للعملية المالية وإنشاء قيد يومية متوازن.
             
@@ -214,7 +221,11 @@ const JournalVouchers: React.FC = () => {
 
     } catch (error) {
         console.error("Error generating journal voucher:", error);
-        setAiError("حدث خطأ أثناء التواصل مع الذكاء الاصطناعي. يرجى المحاولة مرة أخرى.");
+        if (error instanceof Error && error.message.includes('API key not valid')) {
+            setAiError("مفتاح API غير صالح. يرجى التحقق منه في صفحة الإعدادات.");
+        } else {
+            setAiError("حدث خطأ أثناء التواصل مع الذكاء الاصطناعي. يرجى المحاولة مرة أخرى.");
+        }
     } finally {
         setIsAiLoading(false);
     }
