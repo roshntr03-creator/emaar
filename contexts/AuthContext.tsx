@@ -164,7 +164,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // Insecure local login: Check against original seed passwords
         const seedPasswords: Record<string, string> = {
-            'admin@company.com': 'admin',
+            'admin@company.com': 'admin1',
             'accountant@company.com': 'accountant',
             'pm@company.com': 'project_manager',
             'viewer@company.com': 'viewer',

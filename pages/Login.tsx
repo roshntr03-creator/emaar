@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building, Mail, Lock, AlertTriangle, Settings } from 'lucide-react';
@@ -124,7 +125,7 @@ const Login: React.FC = () => {
            <div className="mt-6 text-xs text-center text-gray-500 bg-gray-50 p-3 rounded-md border">
             <p className="font-bold mb-2">لأغراض العرض التوضيحي:</p>
             <ul className="space-y-1">
-              <li><span className="font-semibold">المدير:</span> admin@company.com / <span className="font-mono">admin</span></li>
+              <li><span className="font-semibold">المدير:</span> admin@company.com / <span className="font-mono">admin1</span></li>
               <li><span className="font-semibold">المحاسب:</span> accountant@company.com / <span className="font-mono">accountant</span></li>
             </ul>
           </div>
