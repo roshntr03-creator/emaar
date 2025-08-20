@@ -4,8 +4,9 @@ import { Building, Settings as SettingsIcon, Banknote, Bell, Shield, KeyRound, L
 import type { User, AllRolesPermissions, SettingsData, PermissionAction, ModulePermissions, FirebaseConfig } from '../types';
 import * as localApi from '../api';
 import * as firebaseApi from '../firebase/api';
-import { getFirebaseConfig, saveFirebaseConfig, clearFirebaseConfig, isFirebaseConfigured, uploadLocalDataToFirestore } from '../firebase/config';
+import { isFirebaseConfigured, uploadLocalDataToFirestore } from '../firebase/config';
 import ApiKeyManager from '../components/settings/ApiKeyManager';
+import FirebaseConfigManager from '../components/settings/FirebaseConfigManager';
 
 
 // --- Component Configuration ---
@@ -51,30 +52,9 @@ const permissionConfig: { [module: string]: { label: string; actions: { key: Per
 };
 
 const DataManagementTab: React.FC = () => {
-    const [firebaseConfig, setFirebaseConfig] = useState<FirebaseConfig | null>(getFirebaseConfig());
-    const [configInputs, setConfigInputs] = useState<FirebaseConfig>(firebaseConfig || { apiKey: '', authDomain: '', projectId: '', storageBucket: '', messagingSenderId: '', appId: '' });
     const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
     const [syncMessage, setSyncMessage] = useState('');
 
-    const handleConfigChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setConfigInputs(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleSaveConfig = () => {
-        saveFirebaseConfig(configInputs);
-        setFirebaseConfig(configInputs);
-        alert('تم حفظ إعدادات Firebase. الرجاء إعادة تحميل الصفحة لتفعيل الاتصال.');
-    };
-
-    const handleClearConfig = () => {
-        if(window.confirm('هل أنت متأكد من حذف إعدادات الاتصال بالسحابة؟')) {
-            clearFirebaseConfig();
-            setFirebaseConfig(null);
-            setConfigInputs({ apiKey: '', authDomain: '', projectId: '', storageBucket: '', messagingSenderId: '', appId: '' });
-        }
-    };
-    
     const handleSync = async () => {
         if (!isFirebaseConfigured()) {
             setSyncStatus('error');
@@ -160,24 +140,14 @@ const DataManagementTab: React.FC = () => {
                     اربط البرنامج بقاعدة بيانات Firebase Firestore للاحتفاظ بنسخة احتياطية من بياناتك ومزامنتها عبر الأجهزة.
                 </p>
 
-                <div className="mt-4 p-4 border rounded-lg bg-gray-50 space-y-2">
-                    <h4 className="font-semibold text-md text-gray-700">إعدادات الاتصال</h4>
-                    {Object.keys(configInputs).map(key => (
-                        <div key={key}>
-                            <label htmlFor={key} className="block text-xs font-medium text-gray-600">{key}</label>
-                            <input type="text" id={key} name={key} value={configInputs[key as keyof FirebaseConfig]} onChange={handleConfigChange} className="w-full text-sm mt-1 px-2 py-1 border border-gray-300 rounded-md shadow-sm font-mono" />
-                        </div>
-                    ))}
-                    <div className="flex space-x-2 space-x-reverse pt-2">
-                        <button onClick={handleSaveConfig} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">حفظ الإعدادات</button>
-                        {firebaseConfig && <button onClick={handleClearConfig} className="px-4 py-2 text-sm font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200">حذف الإعدادات</button>}
-                    </div>
+                <div className="mt-4">
+                   <FirebaseConfigManager onConfigSaved={() => window.location.reload()} />
                 </div>
                 
                 <div className="mt-4">
                      <h4 className="font-semibold text-md text-gray-700">المزامنة السحابية</h4>
                      <p className="text-xs text-gray-500 mb-2">رفع البيانات المحلية الحالية إلى قاعدة بيانات Firebase.</p>
-                     <button onClick={handleSync} disabled={syncStatus === 'syncing'} className="w-full flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:bg-indigo-400">
+                     <button onClick={handleSync} disabled={syncStatus === 'syncing' || !isFirebaseConfigured()} className="w-full flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:bg-indigo-400">
                         {syncStatus === 'syncing' ? <Loader2 className="animate-spin" /> : <UploadCloud size={16} className="ml-2" />}
                         بدء المزامنة الآن
                      </button>

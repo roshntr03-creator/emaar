@@ -1,7 +1,11 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building, Mail, Lock, AlertTriangle } from 'lucide-react';
+import { Building, Mail, Lock, AlertTriangle, Settings } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import Modal from '../components/ui/Modal';
+import FirebaseConfigManager from '../components/settings/FirebaseConfigManager';
+import { isFirebaseConfigured } from '../firebase/config';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -10,6 +14,8 @@ const Login: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const usingFirebase = isFirebaseConfigured();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,10 +34,25 @@ const Login: React.FC = () => {
       setIsLoading(false);
     }
   };
+  
+  const handleConfigSaved = () => {
+      setIsConfigModalOpen(false);
+      window.location.reload();
+  };
+
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 font-sans">
-      <div className="w-full max-w-4xl flex-row-reverse lg:flex-row flex bg-white rounded-xl shadow-2xl overflow-hidden">
+      <div className="w-full max-w-4xl flex-row-reverse lg:flex-row flex bg-white rounded-xl shadow-2xl overflow-hidden relative">
+        {/* Config button for mobile */}
+        <button 
+          onClick={() => setIsConfigModalOpen(true)}
+          className="lg:hidden absolute top-4 left-4 p-2 bg-gray-100 rounded-full text-gray-600 hover:bg-gray-200 z-10"
+          aria-label="إعدادات الاتصال"
+        >
+          <Settings size={20} />
+        </button>
+
         {/* Form Section */}
         <div className="w-full lg:w-1/2 p-8 md:p-12">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">أهلاً بك مجدداً!</h2>
@@ -116,11 +137,31 @@ const Login: React.FC = () => {
                 <h1 className="text-3xl font-bold">نظام محاسبة المقاولات</h1>
                 <p className="mt-2 opacity-80">إدارة متكاملة لمشاريعك وأموالك بكفاءة ودقة.</p>
             </div>
+            <div className="text-center">
+                <button 
+                  onClick={() => setIsConfigModalOpen(true)} 
+                  className="flex items-center gap-2 px-4 py-2 text-sm bg-white/20 hover:bg-white/30 rounded-full transition-colors"
+                >
+                  <Settings size={16} />
+                  <span>إعدادات الاتصال السحابي</span>
+                </button>
+                 <p className="text-xs mt-3 opacity-80">
+                  {usingFirebase ? "الوضع الحالي: متصل بالسحابة" : "الوضع الحالي: محلي"}
+                </p>
+            </div>
             <div className="text-xs opacity-70">
                 &copy; {new Date().getFullYear()} جميع الحقوق محفوظة.
             </div>
         </div>
       </div>
+
+      <Modal isOpen={isConfigModalOpen} onClose={() => setIsConfigModalOpen(false)} title="إعدادات الاتصال السحابي">
+        <p className="text-sm text-gray-600 mb-4">
+            هنا يمكنك إعداد الاتصال بقاعدة بيانات Firebase لمزامنة بياناتك. إذا تركت الحقول فارغة، سيعمل النظام في الوضع المحلي.
+        </p>
+        <FirebaseConfigManager onConfigSaved={handleConfigSaved} />
+      </Modal>
+
     </div>
   );
 };
