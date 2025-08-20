@@ -49,14 +49,16 @@ export const initializeFirebase = (): { app: FirebaseApp, auth: Auth, db: Firest
     const config = getFirebaseConfig();
     if (config) {
         try {
-            if (!firebase.apps.length) {
+            // Check if the default app is already initialized
+            const defaultApp = firebase.apps.find(app => app?.name === '[DEFAULT]');
+            if (!defaultApp) {
                 firebaseApp = firebase.initializeApp(config);
             } else {
-                firebaseApp = firebase.app();
+                firebaseApp = defaultApp;
             }
-            auth = firebase.auth();
-            firestore = firebase.firestore();
-            storage = firebase.storage();
+            auth = firebase.auth(firebaseApp);
+            firestore = firebase.firestore(firebaseApp);
+            storage = firebase.storage(firebaseApp);
             return { app: firebaseApp, auth, db: firestore, storage: storage };
         } catch (error) {
             console.error("Firebase initialization failed:", error);

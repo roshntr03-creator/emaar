@@ -44,18 +44,30 @@ const FirebaseConfigManager: React.FC<FirebaseConfigManagerProps> = ({ onConfigS
     const handleTestConnection = async () => {
         setTestStatus('testing');
         setTestMessage('');
+        let testApp: firebase.app.App | null = null;
         try {
-            // Attempt to initialize a temporary app to validate config
-            // Using a unique name avoids conflicts with the main app instance
-            firebase.initializeApp(configInputs, `config_test_${Date.now()}`);
+            const appName = `config_test_${Date.now()}`;
+            testApp = firebase.initializeApp(configInputs, appName);
+            // A simple check to see if auth can be accessed without error
+            const authInstance = testApp.auth();
+            if(!authInstance) throw new Error("Auth service unavailable.");
+            
             setTestStatus('success');
             setTestMessage('تم الاتصال بنجاح!');
         } catch (error) {
             setTestStatus('fail');
             setTestMessage('فشل الاتصال. تحقق من بياناتك.');
             console.error("Firebase test init failed:", error);
+        } finally {
+            if (testApp) {
+                try {
+                    await testApp.delete();
+                } catch(e) {
+                    console.error("Failed to delete test Firebase app instance", e);
+                }
+            }
+            setTimeout(() => setTestStatus('idle'), 4000);
         }
-        setTimeout(() => setTestStatus('idle'), 5000);
     };
     
     return (

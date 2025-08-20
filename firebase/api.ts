@@ -177,71 +177,90 @@ export const completePurchaseOrder = async (poId: string): Promise<PurchaseOrder
     const firebaseServices = initializeFirebase();
     if (!firebaseServices) throw new Error("Firebase not initialized");
     const db = firebaseServices.db;
-    
-    // Fetch accounts needed for the transaction beforehand
-    const invAccQuery = db.collection('accounts').where("code", "==", "112").limit(1);
-    const payAccQuery = db.collection('accounts').where("code", "==", "211").limit(1);
 
     try {
-        const [invAccSnap, payAccSnap] = await Promise.all([
-            invAccQuery.get(),
-            payAccQuery.get()
-        ]);
+        // Step 1: Fetch all necessary data *before* the transaction.
+        const po = await getDocumentData<PurchaseOrder>('purchaseOrders', poId);
+        if (!po || po.status !== 'approved') {
+            console.error("Purchase order not found or not in 'approved' status.");
+            return null;
+        }
 
-        if (invAccSnap.empty || payAccSnap.empty) {
-            throw new Error("Required accounts (Inventory: 112, Payables: 211) not found.");
+        const invAccQuery = await db.collection('accounts').where("code", "==", "112").limit(1).get();
+        const payAccQuery = await db.collection('accounts').where("code", "==", "211").limit(1).get();
+
+        if (invAccQuery.empty || payAccQuery.empty) {
+            throw new Error("Required accounts for PO completion are missing (Inventory: 112, Payables: 211)");
+        }
+        const inventoryAccount = { id: invAccQuery.docs[0].id, ...invAccQuery.docs[0].data() } as Account;
+        const payableAccount = { id: payAccQuery.docs[0].id, ...payAccQuery.docs[0].data() } as Account;
+
+        // Create a map from item description to its DocumentReference (or null if it doesn't exist)
+        const inventoryItemRefs = new Map<string, firebase.firestore.DocumentReference | null>();
+        for (const line of po.lines) {
+            const itemQuery = await db.collection('inventory').where("name", "==", line.description.trim()).limit(1).get();
+            if (!itemQuery.empty) {
+                inventoryItemRefs.set(line.description.trim(), itemQuery.docs[0].ref);
+            } else {
+                inventoryItemRefs.set(line.description.trim(), null);
+            }
         }
         
-        const inventoryAccount = { id: invAccSnap.docs[0].id, ...invAccSnap.docs[0].data() } as Account;
-        const payableAccount = { id: payAccSnap.docs[0].id, ...payAccSnap.docs[0].data() } as Account;
-
+        // Step 2: Run the atomic transaction.
         return await db.runTransaction(async (transaction) => {
             const poRef = db.collection('purchaseOrders').doc(poId);
             const poDoc = await transaction.get(poRef);
-            if (!poDoc.exists) throw new Error("Purchase order not found");
+            if (!poDoc.exists) throw new Error("Purchase order disappeared during transaction.");
             
-            const po = { ...poDoc.data(), id: poDoc.id } as PurchaseOrder;
-            if (po.status !== 'approved') throw new Error("Can only complete 'approved' orders.");
+            const poInTx = { ...poDoc.data(), id: poDoc.id } as PurchaseOrder;
+            if (poInTx.status !== 'approved') throw new Error("PO status was changed during transaction.");
 
-            const totalAmount = po.lines.reduce((sum, line) => sum + (line.quantity * line.unitPrice), 0);
+            // Create Journal Voucher
+            const totalAmount = poInTx.lines.reduce((sum, line) => sum + (line.quantity * line.unitPrice), 0);
             const jvData: Omit<JournalVoucher, 'id'> = {
                 date: new Date().toISOString().split('T')[0],
-                description: `استلام أصناف بموجب أمر الشراء ${po.id}`,
+                description: `استلام أصناف بموجب أمر الشراء ${poInTx.id}`,
                 status: 'posted',
                 lines: [
-                    { accountId: inventoryAccount.id, description: `زيادة المخزون من ${po.supplierName}`, debit: totalAmount, credit: 0 },
-                    { accountId: payableAccount.id, description: `استحقاق للمورد ${po.supplierName}`, debit: 0, credit: totalAmount },
+                    { accountId: inventoryAccount.id, description: `زيادة المخزون من ${poInTx.supplierName}`, debit: totalAmount, credit: 0 },
+                    { accountId: payableAccount.id, description: `استحقاق للمورد ${poInTx.supplierName}`, debit: 0, credit: totalAmount },
                 ]
             };
             const jvRef = db.collection('journalVouchers').doc();
             transaction.set(jvRef, jvData);
 
-            for (const line of po.lines) {
-                const itemQuery = db.collection('inventory').where("name", "==", line.description.trim()).limit(1);
-                const itemSnap = await transaction.get(itemQuery);
+            // Update/Create Inventory Items
+            for (const line of poInTx.lines) {
+                const itemRef = inventoryItemRefs.get(line.description.trim());
                 
-                if (!itemSnap.empty) {
-                    const itemDoc = itemSnap.docs[0];
-                    const item = { ...itemDoc.data(), id: itemDoc.id } as InventoryItem;
-                    const oldTotalValue = item.quantity * item.averageCost;
-                    const newItemsValue = line.quantity * line.unitPrice;
-                    const newTotalQuantity = item.quantity + line.quantity;
-                    const newAverageCost = newTotalQuantity > 0 ? (oldTotalValue + newItemsValue) / newTotalQuantity : 0;
-                    
-                    transaction.update(itemDoc.ref, { quantity: newTotalQuantity, averageCost: newAverageCost });
+                if (itemRef) {
+                    const itemDoc = await transaction.get(itemRef);
+                    if (itemDoc.exists) {
+                        const item = { ...itemDoc.data(), id: itemDoc.id } as InventoryItem;
+                        const oldTotalValue = item.quantity * item.averageCost;
+                        const newItemsValue = line.quantity * line.unitPrice;
+                        const newTotalQuantity = item.quantity + line.quantity;
+                        const newAverageCost = newTotalQuantity > 0 ? (oldTotalValue + newItemsValue) / newTotalQuantity : 0;
+                        transaction.update(itemRef, { quantity: newTotalQuantity, averageCost: newAverageCost });
+                    } else {
+                        const newItemData: Omit<InventoryItem, 'id'> = { name: line.description, category: 'مواد عامة', quantity: line.quantity, unit: 'وحدة', averageCost: line.unitPrice };
+                        transaction.set(itemRef, newItemData);
+                    }
                 } else {
                     const newItemData: Omit<InventoryItem, 'id'> = { name: line.description, category: 'مواد عامة', quantity: line.quantity, unit: 'وحدة', averageCost: line.unitPrice };
-                    const newItemRef = db.collection('inventory').doc(); // Auto-generate ID
+                    const newItemRef = db.collection('inventory').doc();
                     transaction.set(newItemRef, newItemData);
                 }
             }
 
+            // Update PO status
             transaction.update(poRef, { status: 'completed', journalVoucherId: jvRef.id });
 
-            return { ...po, status: 'completed' as const, journalVoucherId: jvRef.id };
+            return { ...poInTx, status: 'completed' as const, journalVoucherId: jvRef.id };
         });
+
     } catch (error) {
-        console.error("Error completing purchase order in transaction:", error);
+        console.error("Error completing purchase order:", error);
         return null;
     }
 }
