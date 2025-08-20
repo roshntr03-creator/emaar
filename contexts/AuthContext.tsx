@@ -61,10 +61,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                 if (firebaseUser && firebaseUser.email) {
                     const users = await api.getUsers();
-                    const appUser = users.find(u => u.email === firebaseUser.email);
-                    if (appUser) {
+                    let appUser = users.find(u => u.email === firebaseUser.email);
+                    
+                    if (!appUser) {
+                        // JIT Provisioning: Create user on session restore if they don't exist
+                        console.log(`User ${firebaseUser.email} session restored but not in DB. Provisioning...`);
+                        const newUser: Omit<User, 'id' | 'password'> = {
+                            name: firebaseUser.displayName || firebaseUser.email,
+                            email: firebaseUser.email,
+                            role: 'viewer', // Assign the least privileged role by default
+                            status: 'active',
+                            avatarUrl: firebaseUser.photoURL || `https://i.pravatar.cc/150?u=${firebaseUser.uid}`
+                        };
+                        appUser = await api.addUser(newUser);
+                    }
+
+                    if (appUser && appUser.status === 'active') {
                         await loadPermissionsAndSetUser(appUser);
                     } else {
+                        // If user is inactive or provisioning failed, log them out.
                         logout();
                     }
                 } else {
@@ -102,23 +117,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const firebaseUser = userCredential.user;
 
             if (firebaseUser && firebaseUser.email) {
-                // Check if user exists in our app's user collection
                 const users = await api.getUsers();
-                const appUser = users.find(u => u.email === firebaseUser.email);
+                let appUser = users.find(u => u.email === firebaseUser.email);
 
                 if (appUser) {
-                    // Check if user is active
+                    // User exists, proceed as normal
                     if (appUser.status === 'inactive') {
                         await auth.signOut();
                         return { success: false, message: 'هذا الحساب غير نشط. يرجى مراجعة المسؤول.' };
                     }
-                    // User exists and is active, load permissions and set state.
                     await loadPermissionsAndSetUser(appUser);
                     return { success: true, message: "تم تسجيل الدخول بنجاح." };
                 } else {
-                    // User authenticated with Firebase but is not in our app's user database.
-                    await auth.signOut(); // Sign out immediately to prevent inconsistent state
-                    return { success: false, message: `تم التحقق من المستخدم بنجاح، ولكن لا يوجد له حساب مسجل في التطبيق. يرجى التواصل مع المسؤول لإضافتك.` };
+                    // JIT Provisioning: User authenticated with Firebase but is not in our app's user database.
+                    // Automatically create a new user profile for them.
+                    console.log(`User ${firebaseUser.email} authenticated but not in DB. Provisioning...`);
+                    
+                    const newUser: Omit<User, 'id' | 'password'> = {
+                        name: firebaseUser.displayName || firebaseUser.email,
+                        email: firebaseUser.email,
+                        role: 'viewer', // Assign the least privileged role by default
+                        status: 'active',
+                        avatarUrl: firebaseUser.photoURL || `https://i.pravatar.cc/150?u=${firebaseUser.uid}`
+                    };
+
+                    const createdUser = await api.addUser(newUser);
+                    
+                    if (createdUser) {
+                        // User successfully created, now load their permissions and log them in.
+                        await loadPermissionsAndSetUser(createdUser);
+                        return { success: true, message: 'مرحباً بك! تم إنشاء حسابك تلقائياً بصلاحيات مشاهدة.' };
+                    } else {
+                        // Something went wrong creating the user profile, so sign them out.
+                        await auth.signOut();
+                        return { success: false, message: 'فشل إنشاء ملف تعريف المستخدم الخاص بك. يرجى المحاولة مرة أخرى أو الاتصال بالمسؤول.' };
+                    }
                 }
             }
              // Fallback, should not be reached if signInWithEmailAndPassword is successful
