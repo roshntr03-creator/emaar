@@ -324,6 +324,16 @@ export interface FinancialOverviewData {
     payrollRuns: { period: string; payDate: string; status: PayrollRun['status']; totalPaid: number }[];
 }
 
+// --- Reports ---
+export interface ReportLine {
+  code: string;
+  name: string;
+  balance: number;
+  isTotal?: boolean;
+  level?: number;
+}
+
+
 // --- Settings & Permissions ---
 
 export type PermissionAction = 'view' | 'create' | 'edit' | 'delete';
