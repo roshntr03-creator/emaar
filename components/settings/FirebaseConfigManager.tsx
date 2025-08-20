@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
 import { Cloud, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
-import { getFirebaseConfig, saveFirebaseConfig, clearFirebaseConfig, initializeFirebase } from '../../firebase/config';
+import { initializeApp } from '@firebase/app';
+import { getFirebaseConfig, saveFirebaseConfig, clearFirebaseConfig } from '../../firebase/config';
 import type { FirebaseConfig } from '../../types';
 
 interface FirebaseConfigManagerProps {
@@ -17,60 +18,46 @@ const FirebaseConfigManager: React.FC<FirebaseConfigManagerProps> = ({ onConfigS
     const handleConfigChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setConfigInputs(prev => ({ ...prev, [name]: value }));
+        setTestStatus('idle'); // Reset test status on change
     };
 
     const handleSaveConfig = () => {
         saveFirebaseConfig(configInputs);
         setFirebaseConfig(configInputs);
-        alert('تم حفظ إعدادات Firebase. الرجاء إعادة تحميل الصفحة لتفعيل الاتصال.');
+        alert('تم حفظ إعدادات Firebase. سيتم الآن إعادة تحميل الصفحة لتطبيق التغييرات.');
         if (onConfigSaved) {
             onConfigSaved();
         }
     };
 
     const handleClearConfig = () => {
-        if(window.confirm('هل أنت متأكد من حذف إعدادات الاتصال بالسحابة؟')) {
+        if(window.confirm('هل أنت متأكد من حذف إعدادات الاتصال بالسحابة؟ سيعود التطبيق للعمل بالوضع المحلي.')) {
             clearFirebaseConfig();
             setFirebaseConfig(null);
             setConfigInputs({ apiKey: '', authDomain: '', projectId: '', storageBucket: '', messagingSenderId: '', appId: '' });
-            alert('تم حذف إعدادات Firebase. الرجاء إعادة تحميل الصفحة للعودة إلى الوضع المحلي.');
+            alert('تم حذف إعدادات Firebase. سيتم الآن إعادة تحميل الصفحة.');
              if (onConfigSaved) {
                 onConfigSaved();
             }
         }
     };
 
-    const handleTestConnection = () => {
+    const handleTestConnection = async () => {
         setTestStatus('testing');
         setTestMessage('');
-        
-        // Temporarily save config to be tested
-        const originalConfig = getFirebaseConfig();
-        saveFirebaseConfig(configInputs);
-
-        // Try to initialize
-        const services = initializeFirebase();
-
-        if (services) {
+        try {
+            // Attempt to initialize a temporary app to validate config
+            // Using a unique name avoids conflicts with the main app instance
+            initializeApp(configInputs, `config_test_${Date.now()}`);
             setTestStatus('success');
             setTestMessage('تم الاتصال بنجاح!');
-        } else {
+        } catch (error) {
             setTestStatus('fail');
-            setTestMessage('فشل الاتصال. الرجاء التحقق من بيانات الإعدادات.');
+            setTestMessage('فشل الاتصال. تحقق من بياناتك.');
+            console.error("Firebase test init failed:", error);
         }
-
-        // Restore original config
-        if (originalConfig) {
-            saveFirebaseConfig(originalConfig);
-        } else {
-            clearFirebaseConfig();
-        }
-        
-        // A reload is the safest way to switch configs. The test is just a temporary check.
-        // We don't re-initialize here to avoid side-effects.
-
-        setTimeout(() => setTestStatus('idle'), 4000);
-    }
+        setTimeout(() => setTestStatus('idle'), 5000);
+    };
     
     return (
         <div className="p-4 border rounded-lg bg-gray-50 space-y-2">
