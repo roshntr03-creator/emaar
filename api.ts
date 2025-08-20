@@ -71,7 +71,7 @@ export const deleteInventoryItem = async (id: string): Promise<void> => simulate
 
 // --- Users ---
 export const getUsers = async (): Promise<User[]> => simulateNetwork(db.getUsers());
-export const addUser = async (data: Omit<User, 'id'>): Promise<User> => simulateNetwork(db.addUser(data));
+export const addUser = async (data: Omit<User, 'id' | 'password'>): Promise<User> => simulateNetwork(db.addUser(data));
 export const updateUser = async (data: User): Promise<User | null> => simulateNetwork(db.updateUser(data));
 export const deleteUser = async (id: string): Promise<void> => simulateNetwork(db.deleteUser(id));
 

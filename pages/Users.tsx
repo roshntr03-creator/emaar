@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import type { User } from '../types';
-import { PlusCircle, Search, Edit, Trash2, Filter, Loader2 } from 'lucide-react';
+import { PlusCircle, Search, Edit, Trash2, Filter, Loader2, Image } from 'lucide-react';
 import Modal from '../components/ui/Modal';
 import * as localApi from '../api';
 import * as firebaseApi from '../firebase/api';
@@ -57,8 +57,8 @@ const Users: React.FC = () => {
     fetchUsers();
   }, [usingFirebase]);
 
-  type FormData = Omit<User, 'id' | 'avatarUrl'> & { password?: string };
-  const initialFormState: FormData = { name: '', email: '', role: 'viewer', status: 'active', password: '' };
+  type FormData = Omit<User, 'id' | 'password'>;
+  const initialFormState: FormData = { name: '', email: '', role: 'viewer', status: 'active', avatarUrl: '' };
   const [formData, setFormData] = useState<FormData>(initialFormState);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -74,8 +74,8 @@ const Users: React.FC = () => {
 
   const openEditModal = (user: User) => {
     setEditingUser(user);
-    const { id, avatarUrl, ...rest } = user;
-    setFormData({ ...rest, password: '' });
+    const { id, password, ...rest } = user;
+    setFormData(rest);
     setIsModalOpen(true);
   };
 
@@ -89,10 +89,7 @@ const Users: React.FC = () => {
         if (editingUser) {
             await api.updateUser({ ...editingUser, ...formData });
         } else {
-            await api.addUser({
-                ...formData,
-                avatarUrl: `https://picsum.photos/100/100?random=${users.length + 1}`,
-            });
+            await api.addUser(formData);
         }
         const updatedUsers = await api.getUsers();
         setUsers(updatedUsers);
@@ -129,10 +126,10 @@ const Users: React.FC = () => {
   return (
     <>
       <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
           <h2 className="text-2xl font-bold text-gray-800">إدارة المستخدمين</h2>
-          <div className="flex items-center space-x-2 space-x-reverse">
-            <div className="relative">
+          <div className="w-full md:w-auto flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-2 md:space-x-reverse">
+            <div className="relative w-full md:w-auto">
               <input
                 type="text"
                 placeholder="بحث..."
@@ -142,8 +139,19 @@ const Users: React.FC = () => {
               />
               <span className="absolute inset-y-0 left-0 flex items-center pl-3"><Search className="w-5 h-5 text-gray-400" /></span>
             </div>
+             <select value={filters.role} onChange={e => setFilters({...filters, role: e.target.value})} className="w-full md:w-auto px-3 py-2 border border-gray-300 rounded-md bg-white text-sm">
+                <option value="all">كل الأدوار</option>
+                {Object.entries(roleMap).map(([key, value]) => (
+                  <option key={key} value={key}>{value}</option>
+                ))}
+              </select>
+             <select value={filters.status} onChange={e => setFilters({...filters, status: e.target.value})} className="w-full md:w-auto px-3 py-2 border border-gray-300 rounded-md bg-white text-sm">
+                <option value="all">كل الحالات</option>
+                <option value="active">نشط</option>
+                <option value="inactive">غير نشط</option>
+              </select>
             {hasPermission('users', 'create') && (
-              <button onClick={openAddModal} className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
+              <button onClick={openAddModal} className="w-full md:w-auto flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
                 <PlusCircle size={16} className="ml-2" />
                 إضافة مستخدم
               </button>
@@ -151,42 +159,20 @@ const Users: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center space-x-4 space-x-reverse mb-6 border-t pt-4">
-            <Filter size={16} className="text-gray-600"/>
-            <div>
-              <label htmlFor="roleFilter" className="text-sm font-medium text-gray-700 mr-2">الدور:</label>
-              <select id="roleFilter" value={filters.role} onChange={e => setFilters({...filters, role: e.target.value})} className="px-3 py-1 border border-gray-300 rounded-md bg-white">
-                <option value="all">الكل</option>
-                {Object.entries(roleMap).map(([key, value]) => (
-                  <option key={key} value={key}>{value}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="statusFilter" className="text-sm font-medium text-gray-700 mr-2">الحالة:</label>
-              <select id="statusFilter" value={filters.status} onChange={e => setFilters({...filters, status: e.target.value})} className="px-3 py-1 border border-gray-300 rounded-md bg-white">
-                <option value="all">الكل</option>
-                <option value="active">نشط</option>
-                <option value="inactive">غير نشط</option>
-              </select>
-            </div>
-        </div>
-
         <div className="overflow-x-auto">
           <table className="min-w-full bg-white text-right">
             <thead className="bg-gray-50">
               <tr>
                 <th className="py-3 px-4 border-b text-sm font-semibold text-gray-600">المستخدم</th>
-                <th className="py-3 px-4 border-b text-sm font-semibold text-gray-600">البريد الإلكتروني</th>
                 <th className="py-3 px-4 border-b text-sm font-semibold text-gray-600">الدور</th>
                 <th className="py-3 px-4 border-b text-sm font-semibold text-gray-600">الحالة</th>
-                {showActionsColumn && <th className="py-3 px-4 border-b text-sm font-semibold text-gray-600">إجراءات</th>}
+                {showActionsColumn && <th className="py-3 px-4 border-b text-sm font-semibold text-gray-600 text-center">إجراءات</th>}
               </tr>
             </thead>
             <tbody>
             {isLoading ? (
                 <tr>
-                  <td colSpan={showActionsColumn ? 5 : 4} className="text-center py-10">
+                  <td colSpan={showActionsColumn ? 4 : 3} className="text-center py-10">
                     <div className="flex justify-center items-center">
                       <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
                       <span className="mr-3 text-gray-500">جاري تحميل المستخدمين...</span>
@@ -197,18 +183,20 @@ const Users: React.FC = () => {
                 <tr key={user.id} className="hover:bg-gray-50">
                   <td className="py-3 px-4 border-b">
                     <div className="flex items-center">
-                      <img src={user.avatarUrl || `https://picsum.photos/100/100?random=${user.id}`} alt={user.name} className="w-10 h-10 rounded-full ml-3" />
-                      <span>{user.name}</span>
+                      <img src={user.avatarUrl || `https://i.pravatar.cc/150?u=${user.id}`} alt={user.name} className="w-10 h-10 rounded-full ml-3 object-cover" />
+                      <div>
+                        <p className="font-semibold text-gray-800">{user.name}</p>
+                        <p className="text-sm text-gray-500">{user.email}</p>
+                      </div>
                     </div>
                   </td>
-                  <td className="py-3 px-4 border-b">{user.email}</td>
                   <td className="py-3 px-4 border-b">{getRoleChip(user.role)}</td>
                   <td className="py-3 px-4 border-b">{getStatusChip(user.status)}</td>
                   {showActionsColumn &&
                     <td className="py-3 px-4 border-b">
                       <div className="flex justify-center items-center space-x-2 space-x-reverse">
-                        {canEdit && <button onClick={() => openEditModal(user)} className="text-blue-500 hover:text-blue-700 p-1"><Edit size={18} /></button>}
-                        {canDelete && <button onClick={() => handleDelete(user.id)} className="text-red-500 hover:text-red-700 p-1"><Trash2 size={18} /></button>}
+                        {canEdit && <button onClick={() => openEditModal(user)} className="text-gray-500 hover:text-blue-700 p-1"><Edit size={18} /></button>}
+                        {canDelete && <button onClick={() => handleDelete(user.id)} className="text-gray-500 hover:text-red-700 p-1"><Trash2 size={18} /></button>}
                       </div>
                     </td>
                   }
@@ -230,9 +218,12 @@ const Users: React.FC = () => {
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">البريد الإلكتروني</label>
               <input type="email" name="email" id="email" value={formData.email} onChange={handleInputChange} required className="w-full px-3 py-2 border border-gray-300 rounded-md" />
             </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">كلمة المرور</label>
-              <input type="password" name="password" id="password" value={formData.password} onChange={handleInputChange} required={!editingUser} className="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder={editingUser ? "اتركه فارغاً لعدم التغيير" : ""} />
+             <div>
+              <label htmlFor="avatarUrl" className="block text-sm font-medium text-gray-700 mb-1">رابط الصورة الرمزية</label>
+              <input type="text" name="avatarUrl" id="avatarUrl" value={formData.avatarUrl || ''} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+            </div>
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm text-yellow-800">
+                <p>ملاحظة: تتم إدارة كلمات المرور للمستخدمين الجدد عبر نظام Firebase Authentication مباشرة لضمان الأمان.</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>

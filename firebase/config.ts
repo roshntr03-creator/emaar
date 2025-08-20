@@ -1,12 +1,14 @@
-import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getFirestore, Firestore } from 'firebase/firestore';
+import * as firebaseAppModule from 'firebase/app';
+import { getAuth, Auth } from 'firebase/auth';
+import { getFirestore, Firestore, writeBatch, doc } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
 import type { FirebaseConfig } from '../types';
 import { db } from '../database';
 
 const FIREBASE_CONFIG_KEY = 'firebase_config';
 
-let firebaseApp: FirebaseApp | null = null;
+let firebaseApp: firebaseAppModule.FirebaseApp | null = null;
+let auth: Auth | null = null;
 let firestore: Firestore | null = null;
 let storage: FirebaseStorage | null = null;
 
@@ -23,6 +25,7 @@ export const clearFirebaseConfig = () => {
     localStorage.removeItem(FIREBASE_CONFIG_KEY);
     // Potentially disconnect or re-initialize services if needed
     firebaseApp = null;
+    auth = null;
     firestore = null;
     storage = null;
 };
@@ -32,22 +35,23 @@ export const isFirebaseConfigured = (): boolean => {
 };
 
 
-export const initializeFirebase = (): { app: FirebaseApp, db: Firestore, storage: FirebaseStorage } | null => {
-    if (firebaseApp && firestore && storage) {
-        return { app: firebaseApp, db: firestore, storage: storage };
+export const initializeFirebase = (): { app: firebaseAppModule.FirebaseApp, auth: Auth, db: Firestore, storage: FirebaseStorage } | null => {
+    if (firebaseApp && auth && firestore && storage) {
+        return { app: firebaseApp, auth, db: firestore, storage: storage };
     }
 
     const config = getFirebaseConfig();
     if (config) {
         try {
-            if (!getApps().length) {
-                firebaseApp = initializeApp(config);
+            if (!firebaseAppModule.getApps().length) {
+                firebaseApp = firebaseAppModule.initializeApp(config);
             } else {
-                firebaseApp = getApp();
+                firebaseApp = firebaseAppModule.getApp();
             }
+            auth = getAuth(firebaseApp);
             firestore = getFirestore(firebaseApp);
             storage = getStorage(firebaseApp);
-            return { app: firebaseApp, db: firestore, storage: storage };
+            return { app: firebaseApp, auth, db: firestore, storage: storage };
         } catch (error) {
             console.error("Firebase initialization failed:", error);
             clearFirebaseConfig(); // Clear bad config
@@ -58,18 +62,18 @@ export const initializeFirebase = (): { app: FirebaseApp, db: Firestore, storage
 };
 
 // --- Data Migration ---
-import { collection, writeBatch, doc } from 'firebase/firestore';
 
 export const uploadLocalDataToFirestore = async (
     progressCallback: (message: string) => void
 ): Promise<{ success: boolean; message?: string }> => {
-    const firebase = initializeFirebase();
-    if (!firebase) {
+    const firebaseServices = initializeFirebase();
+    if (!firebaseServices) {
         return { success: false, message: 'Firebase not configured.' };
     }
+    const firestoreDb = firebaseServices.db;
 
     try {
-        const batch = writeBatch(firebase.db);
+        const batch = writeBatch(firestoreDb);
         const localData = JSON.parse(db.exportAllData());
         
         for (const collectionName in localData) {
@@ -80,25 +84,24 @@ export const uploadLocalDataToFirestore = async (
                 progressCallback(`Uploading ${collectionName}...`);
                 
                 const items = localData[collectionName] as any[];
-                const collectionRef = collection(firebase.db, collectionName);
-
+                
                 if (items.length > 0) {
                     items.forEach(item => {
                         const docId = item.id || item.code; // Use 'id' or 'code' for accounts
                         if(docId) {
-                           const docRef = doc(collectionRef, String(docId));
+                           const docRef = doc(firestoreDb, collectionName, String(docId));
                            batch.set(docRef, item);
                         }
                     });
                 } else {
                     // Add a placeholder document to ensure the collection is created and visible in the Firebase UI
-                    const placeholderRef = doc(collectionRef, '_placeholder_');
+                    const placeholderRef = doc(firestoreDb, collectionName, '_placeholder_');
                     batch.set(placeholderRef, { initializedAt: new Date().toISOString(), description: "This document ensures the collection is visible." });
                 }
 
             } else if (typeof localData[collectionName] === 'object' && localData[collectionName] !== null) {
                  progressCallback(`Uploading ${collectionName}...`);
-                 const docRef = doc(firebase.db, 'app_settings', collectionName);
+                 const docRef = doc(firestoreDb, 'app_settings', collectionName);
                  batch.set(docRef, localData[collectionName]);
             }
         }

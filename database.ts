@@ -77,10 +77,10 @@ const seedData: DbData = {
   purchaseOrders: [],
   inventory: [],
   users: [
-      { id: 'USR-001', name: 'أحمد محمود', email: 'admin@company.com', password: 'admin', role: 'admin', status: 'active', avatarUrl: 'https://i.pravatar.cc/150?u=USR-001' },
-      { id: 'USR-002', name: 'فاطمة الزهراء', email: 'accountant@company.com', password: 'accountant', role: 'accountant', status: 'active', avatarUrl: 'https://i.pravatar.cc/150?u=USR-002' },
-      { id: 'USR-003', name: 'علي حسن', email: 'pm@company.com', password: 'project_manager', role: 'project_manager', status: 'active', avatarUrl: 'https://i.pravatar.cc/150?u=USR-003' },
-      { id: 'USR-004', name: 'سارة عبدالله', email: 'viewer@company.com', password: 'viewer', role: 'viewer', status: 'inactive', avatarUrl: 'https://i.pravatar.cc/150?u=USR-004' }
+      { id: 'USR-001', name: 'أحمد محمود', email: 'admin@company.com', role: 'admin', status: 'active', avatarUrl: 'https://i.pravatar.cc/150?u=USR-001' },
+      { id: 'USR-002', name: 'فاطمة الزهراء', email: 'accountant@company.com', role: 'accountant', status: 'active', avatarUrl: 'https://i.pravatar.cc/150?u=USR-002' },
+      { id: 'USR-003', name: 'علي حسن', email: 'pm@company.com', role: 'project_manager', status: 'active', avatarUrl: 'https://i.pravatar.cc/150?u=USR-003' },
+      { id: 'USR-004', name: 'سارة عبدالله', email: 'viewer@company.com', role: 'viewer', status: 'inactive', avatarUrl: 'https://i.pravatar.cc/150?u=USR-004' }
   ],
   employees: [],
   payrollRuns: [],
@@ -394,7 +394,14 @@ class Database {
 
   // --- Users ---
   getUsers = () => this._getAll('users');
-  addUser = (data: Omit<User, 'id'>) => this._add('users', data, 'USR');
+  addUser = (data: Omit<User, 'id' | 'password'>) => {
+    const userData = { ...data };
+    if (!userData.avatarUrl) {
+      const newId = this._data.users.length + 1;
+      userData.avatarUrl = `https://i.pravatar.cc/150?u=USR-NEW-${newId}`;
+    }
+    return this._add('users', userData, 'USR');
+  }
   updateUser = (data: User) => this._update('users', data);
   deleteUser = (id: string) => this._delete('users', id);
 
