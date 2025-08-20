@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Cloud, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
 import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
 import { getFirebaseConfig, saveFirebaseConfig, clearFirebaseConfig } from '../../firebase/config';
 import type { FirebaseConfig } from '../../types';
 
@@ -49,7 +50,7 @@ const FirebaseConfigManager: React.FC<FirebaseConfigManagerProps> = ({ onConfigS
             const appName = `config_test_${Date.now()}`;
             testApp = firebase.initializeApp(configInputs, appName);
             // A simple check to see if auth can be accessed without error
-            const authInstance = testApp.auth();
+            const authInstance = firebase.auth(testApp);
             if(!authInstance) throw new Error("Auth service unavailable.");
             
             setTestStatus('success');
