@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
@@ -14,6 +15,7 @@ import Suppliers from './pages/Suppliers';
 import ChartOfAccounts from './pages/ChartOfAccounts';
 import PurchaseOrders from './pages/PurchaseOrders';
 import Invoices from './pages/Invoices';
+import SupplierBills from './pages/SupplierBills';
 import Inventory from './pages/Inventory';
 import JournalVouchers from './pages/JournalVouchers';
 import Reports from './pages/Reports';
@@ -47,6 +49,7 @@ const App: React.FC = () => {
                 <Route path="/subcontracts" element={<Subcontracts />} />
                 <Route path="/subcontracts/:id" element={<SubcontractDetail />} />
                 <Route path="/invoices" element={<Invoices />} />
+                <Route path="/supplier-bills" element={<SupplierBills />} />
                 <Route path="/inventory" element={<Inventory />} />
                 <Route path="/journal-vouchers" element={<JournalVouchers />} />
                 <Route path="/reports" element={<Reports />} />

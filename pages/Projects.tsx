@@ -1,12 +1,14 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import type { Project } from '../types';
-import { PlusCircle, Filter, Edit, Trash2, Loader2 } from 'lucide-react';
+import { GoogleGenAI, Type } from "@google/genai";
+import type { Project, ProjectCostEstimate } from '../types';
+import { PlusCircle, Filter, Edit, Trash2, Loader2, BrainCircuit } from 'lucide-react';
 import Modal from '../components/ui/Modal';
 import * as localApi from '../api';
 import * as firebaseApi from '../firebase/api';
 import { isFirebaseConfigured } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
+import { useApiKey } from '../contexts/ApiKeyContext';
 
 const getStatusChip = (status: 'active' | 'completed' | 'on_hold') => {
   switch (status) {
@@ -27,6 +29,13 @@ const Projects: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<'all' | Project['status']>('all');
   const { hasPermission } = useAuth();
   
+  const { apiKey } = useApiKey();
+  const [isEstimationModalOpen, setIsEstimationModalOpen] = useState(false);
+  const [isEstimating, setIsEstimating] = useState(false);
+  const [estimationPrompt, setEstimationPrompt] = useState('');
+  const [estimationResult, setEstimationResult] = useState<ProjectCostEstimate | null>(null);
+  const [estimationError, setEstimationError] = useState('');
+
   const usingFirebase = isFirebaseConfigured();
   const api = usingFirebase ? firebaseApi : localApi;
 
@@ -120,6 +129,117 @@ const Projects: React.FC = () => {
     }
   };
   
+  // --- AI Estimation Handlers ---
+  const openEstimationModal = () => {
+    setEstimationPrompt('');
+    setEstimationResult(null);
+    setEstimationError('');
+    setIsEstimationModalOpen(true);
+  };
+
+  const closeEstimationModal = () => setIsEstimationModalOpen(false);
+
+  const handleGenerateEstimate = async () => {
+    if (!estimationPrompt) {
+      setEstimationError('الرجاء إدخال وصف للمشروع.');
+      return;
+    }
+    if (!apiKey) {
+      setEstimationError('الرجاء إضافة مفتاح Google AI API في الإعدادات لتفعيل هذه الميزة.');
+      return;
+    }
+
+    setIsEstimating(true);
+    setEstimationResult(null);
+    setEstimationError('');
+
+    try {
+      const allProjects = await api.getProjects();
+      const historicalProjects = allProjects
+        .filter(p => p.status === 'completed' && p.budget > 0 && p.spent > 0)
+        .slice(0, 3);
+
+      const historicalDataForAI = historicalProjects.map(p => ({
+        projectName: p.name,
+        finalCost: p.spent,
+        durationInDays: Math.round((new Date(p.endDate).getTime() - new Date(p.startDate).getTime()) / (1000 * 60 * 60 * 24)),
+      }));
+
+      const ai = new GoogleGenAI({ apiKey });
+      const prompt = `
+        أنت خبير تقدير تكاليف في قطاع المقاولات بالمملكة العربية السعودية. مهمتك هي تحليل وصف المشروع التالي وتقديم تقدير تكلفة مفصل ومبني على البيانات التاريخية للمشاريع السابقة.
+
+        وصف المشروع المطلوب تقديره: "${estimationPrompt}"
+
+        بيانات تاريخية من مشاريع مكتملة للمقارنة:
+        ${JSON.stringify(historicalDataForAI)}
+
+        التعليمات:
+        1.  قدّر التكلفة الإجمالية للمشروع بالريال السعودي.
+        2.  قسّم التكلفة إلى فئات رئيسية (مثل: مواد، أجور، مقاولين باطن، معدات، مصاريف إدارية).
+        3.  اذكر الافتراضات التي بنيت عليها تقديرك.
+        4.  قدّر درجة ثقتك في هذا التقدير كنسبة مئوية (0-100).
+        5.  اقترح اسمًا مختصرًا للمشروع بناءً على الوصف.
+        6.  يجب أن يكون الناتج بصيغة JSON حصراً بناءً على المخطط المحدد.
+      `;
+      
+      const responseSchema = {
+        type: Type.OBJECT,
+        properties: {
+            estimatedTotalBudget: { type: Type.NUMBER },
+            costBreakdown: {
+                type: Type.ARRAY,
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        category: { type: Type.STRING },
+                        amount: { type: Type.NUMBER },
+                        description: { type: Type.STRING },
+                    }
+                }
+            },
+            assumptions: { type: Type.ARRAY, items: { type: Type.STRING } },
+            confidenceScore: { type: Type.NUMBER },
+            suggestedProjectName: { type: Type.STRING },
+        },
+        required: ["estimatedTotalBudget", "costBreakdown", "assumptions", "confidenceScore", "suggestedProjectName"],
+      };
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: responseSchema,
+        },
+      });
+
+      setEstimationResult(JSON.parse(response.text));
+
+    } catch (e) {
+      console.error("Error generating estimate:", e);
+      setEstimationError("عذرًا، حدث خطأ أثناء إنشاء التقدير. يرجى المحاولة مرة أخرى.");
+    } finally {
+      setIsEstimating(false);
+    }
+  };
+
+  const handleCreateProjectFromEstimate = () => {
+    if (!estimationResult) return;
+    
+    closeEstimationModal();
+    setEditingProject(null);
+    setFormData({
+      ...initialFormState,
+      name: estimationResult.suggestedProjectName,
+      budget: estimationResult.estimatedTotalBudget,
+      startDate: new Date().toISOString().split('T')[0],
+      endDate: '',
+    });
+    setIsModalOpen(true);
+  };
+
+
   return (
     <>
       <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
@@ -127,12 +247,20 @@ const Projects: React.FC = () => {
           <h2 className="text-2xl font-bold text-gray-800">إدارة المشاريع</h2>
           <div className="flex items-center space-x-2 space-x-reverse">
               {hasPermission('projects', 'create') && (
+                <>
+                <button 
+                  onClick={openEstimationModal}
+                  className="flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">
+                    <BrainCircuit size={16} className="ml-2"/>
+                    تقدير تكلفة (AI)
+                </button>
                 <button 
                   onClick={openAddModal}
                   className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
                     <PlusCircle size={16} className="ml-2"/>
                     إضافة مشروع جديد
                 </button>
+                </>
               )}
           </div>
         </div>
@@ -250,6 +378,75 @@ const Projects: React.FC = () => {
           </div>
         </form>
       </Modal>
+
+      <Modal isOpen={isEstimationModalOpen} onClose={closeEstimationModal} title="تقدير تكلفة مشروع (AI)">
+        {!estimationResult && (
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="estimationPrompt" className="block text-sm font-medium text-gray-700 mb-1">وصف المشروع</label>
+              <textarea 
+                id="estimationPrompt" 
+                rows={4}
+                value={estimationPrompt}
+                onChange={(e) => setEstimationPrompt(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                placeholder="مثال: بناء فيلا سكنية 400 متر مربع في الرياض، دورين وملحق، تشطيب فاخر مع مسبح."
+              />
+            </div>
+            {estimationError && <p className="text-sm text-red-600">{estimationError}</p>}
+            <button 
+              onClick={handleGenerateEstimate} 
+              disabled={isEstimating}
+              className="w-full flex justify-center items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-indigo-400">
+              {isEstimating ? <Loader2 className="animate-spin" /> : "بدء التقدير"}
+            </button>
+          </div>
+        )}
+        {isEstimating && !estimationResult && (
+           <div className="flex flex-col items-center justify-center h-48">
+              <Loader2 className="w-8 h-8 text-indigo-500 animate-spin mb-4" />
+              <p className="text-gray-600">...جاري تحليل البيانات وإعداد التقدير</p>
+            </div>
+        )}
+        {estimationResult && (
+          <div className="space-y-4">
+            <div className="text-center p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-600">إجمالي الميزانية التقديرية</p>
+              <p className="text-3xl font-bold text-indigo-600">﷼{estimationResult.estimatedTotalBudget.toLocaleString()}</p>
+              <p className="text-xs text-gray-500 mt-1">درجة الثقة: {estimationResult.confidenceScore}%</p>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-2">تفصيل التكاليف:</h4>
+              <ul className="space-y-2 text-sm">
+                {estimationResult.costBreakdown.map((item, index) => (
+                  <li key={index} className="p-2 bg-gray-100 rounded-md">
+                    <div className="flex justify-between font-medium">
+                      <span>{item.category}</span>
+                      <span>﷼{item.amount.toLocaleString()}</span>
+                    </div>
+                    <p className="text-xs text-gray-600">{item.description}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-2">الافتراضات:</h4>
+              <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                {estimationResult.assumptions.map((item, index) => <li key={index}>{item}</li>)}
+              </ul>
+            </div>
+             <div className="mt-6 flex justify-end space-x-2 space-x-reverse">
+                <button type="button" onClick={() => {setEstimationResult(null); setEstimationPrompt('')}} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+                  تقدير جديد
+                </button>
+                <button type="button" onClick={handleCreateProjectFromEstimate} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                  إنشاء مشروع بهذا التقدير
+                </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
     </>
   );
 };

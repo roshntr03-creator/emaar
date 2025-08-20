@@ -1,7 +1,8 @@
 import type { 
     Project, Client, Supplier, Invoice, Account, JournalVoucher, PurchaseOrder, InventoryItem, 
     User, Employee, PayrollRun, Voucher, ChangeOrder, Custody, BudgetLine, SupplierBill,
-    ProjectTask, Subcontract, SubcontractorPayment, SettingsData, AllRolesPermissions, Attachment
+    ProjectTask, Subcontract, SubcontractorPayment, SettingsData, AllRolesPermissions, Attachment,
+    ProjectFinancialTransaction, FinancialOverviewData
 } from './types';
 
 // Define the shape of the database storage
@@ -67,6 +68,8 @@ const seedData: DbData = {
     { id: '5', code: '5', name: 'المصروفات', type: 'expense', parentId: null },
     { id: '51', code: '51', name: 'مصروفات تشغيلية', type: 'expense', parentId: '5' },
     { id: '511', code: '511', name: 'مصروف الرواتب والأجور', type: 'expense', parentId: '51' },
+    { id: '512', code: '512', name: 'تكاليف المشاريع', type: 'expense', parentId: '51' },
+    { id: '5121', code: '5121', name: 'تكلفة المواد المنصرفة', type: 'expense', parentId: '512' },
   ],
   journalVouchers: [],
   purchaseOrders: [],
@@ -125,16 +128,16 @@ const seedData: DbData = {
   },
   permissions: {
     admin: {
-        clients: { view: true, create: true, edit: true, delete: true }, suppliers: { view: true, create: true, edit: true, delete: true }, projects: { view: true, create: true, edit: true, delete: true }, chartOfAccounts: { view: true, create: true, edit: true, delete: true }, purchaseOrders: { view: true, create: true, edit: true, delete: true }, invoices: { view: true, create: true, edit: true, delete: true }, inventory: { view: true, create: true, edit: true, delete: true }, journalVouchers: { view: true, create: true, edit: true, delete: true }, reports: { view: true }, employees: { view: true, create: true, edit: true, delete: true }, users: { view: true, create: true, edit: true, delete: true }, payroll: { view: true, create: true, edit: true, delete: true }, changeOrders: { view: true, create: true, edit: true, delete: true }, custody: { view: true, create: true, edit: true, delete: true }, vouchers: { view: true, create: true, edit: true, delete: true }, diagnostics: { view: true }, settings: { view: true, edit: true },
+        clients: { view: true, create: true, edit: true, delete: true }, suppliers: { view: true, create: true, edit: true, delete: true }, projects: { view: true, create: true, edit: true, delete: true }, chartOfAccounts: { view: true, create: true, edit: true, delete: true }, purchaseOrders: { view: true, create: true, edit: true, delete: true }, invoices: { view: true, create: true, edit: true, delete: true }, supplierBills: { view: true, create: true, edit: true, delete: true }, inventory: { view: true, create: true, edit: true, delete: true }, journalVouchers: { view: true, create: true, edit: true, delete: true }, reports: { view: true }, employees: { view: true, create: true, edit: true, delete: true }, users: { view: true, create: true, edit: true, delete: true }, payroll: { view: true, create: true, edit: true, delete: true }, changeOrders: { view: true, create: true, edit: true, delete: true }, custody: { view: true, create: true, edit: true, delete: true }, vouchers: { view: true, create: true, edit: true, delete: true }, diagnostics: { view: true }, settings: { view: true, edit: true },
     },
     accountant: {
-        clients: { view: true, create: true, edit: true, delete: true }, suppliers: { view: true, create: true, edit: true, delete: true }, projects: { view: true, create: false, edit: false, delete: false }, chartOfAccounts: { view: true, create: true, edit: true, delete: true }, purchaseOrders: { view: true, create: true, edit: true, delete: false }, invoices: { view: true, create: true, edit: true, delete: false }, inventory: { view: true, create: true, edit: true, delete: true }, journalVouchers: { view: true, create: true, edit: true, delete: true }, reports: { view: true }, employees: { view: true, create: false, edit: false, delete: false }, users: { view: false, create: false, edit: false, delete: false }, payroll: { view: true, create: true, edit: true, delete: false }, changeOrders: { view: true, create: true, edit: true, delete: false }, custody: { view: true, create: true, edit: true, delete: true }, vouchers: { view: true, create: true, edit: true, delete: true }, diagnostics: { view: false }, settings: { view: true, edit: true },
+        clients: { view: true, create: true, edit: true, delete: true }, suppliers: { view: true, create: true, edit: true, delete: true }, projects: { view: true, create: false, edit: false, delete: false }, chartOfAccounts: { view: true, create: true, edit: true, delete: true }, purchaseOrders: { view: true, create: true, edit: true, delete: false }, invoices: { view: true, create: true, edit: true, delete: false }, supplierBills: { view: true, create: true, edit: true, delete: false }, inventory: { view: true, create: true, edit: true, delete: true }, journalVouchers: { view: true, create: true, edit: true, delete: true }, reports: { view: true }, employees: { view: true, create: false, edit: false, delete: false }, users: { view: false, create: false, edit: false, delete: false }, payroll: { view: true, create: true, edit: true, delete: false }, changeOrders: { view: true, create: true, edit: true, delete: false }, custody: { view: true, create: true, edit: true, delete: true }, vouchers: { view: true, create: true, edit: true, delete: true }, diagnostics: { view: false }, settings: { view: true, edit: true },
     },
     project_manager: {
-        clients: { view: true, create: false, edit: false, delete: false }, suppliers: { view: true, create: false, edit: false, delete: false }, projects: { view: true, create: true, edit: true, delete: false }, chartOfAccounts: { view: true, create: false, edit: false, delete: false }, purchaseOrders: { view: true, create: true, edit: true, delete: false }, invoices: { view: true, create: false, edit: false, delete: false }, inventory: { view: true, create: false, edit: false, delete: false }, journalVouchers: { view: false, create: false, edit: false, delete: false }, reports: { view: true }, employees: { view: true, create: false, edit: false, delete: false }, users: { view: false, create: false, edit: false, delete: false }, payroll: { view: false, create: false, edit: false, delete: false }, changeOrders: { view: true, create: true, edit: true, delete: false }, custody: { view: true, create: true, edit: true, delete: false }, vouchers: { view: false, create: false, edit: false, delete: false }, diagnostics: { view: false }, settings: { view: false, edit: false },
+        clients: { view: true, create: false, edit: false, delete: false }, suppliers: { view: true, create: false, edit: false, delete: false }, projects: { view: true, create: true, edit: true, delete: false }, chartOfAccounts: { view: true, create: false, edit: false, delete: false }, purchaseOrders: { view: true, create: true, edit: true, delete: false }, invoices: { view: true, create: false, edit: false, delete: false }, supplierBills: { view: true, create: false, edit: false, delete: false }, inventory: { view: true, create: false, edit: false, delete: false }, journalVouchers: { view: false, create: false, edit: false, delete: false }, reports: { view: true }, employees: { view: true, create: false, edit: false, delete: false }, users: { view: false, create: false, edit: false, delete: false }, payroll: { view: false, create: false, edit: false, delete: false }, changeOrders: { view: true, create: true, edit: true, delete: false }, custody: { view: true, create: true, edit: true, delete: false }, vouchers: { view: false, create: false, edit: false, delete: false }, diagnostics: { view: false }, settings: { view: false, edit: false },
     },
     viewer: {
-        clients: { view: true, create: false, edit: false, delete: false }, suppliers: { view: true, create: false, edit: false, delete: false }, projects: { view: true, create: false, edit: false, delete: false }, chartOfAccounts: { view: true, create: false, edit: false, delete: false }, purchaseOrders: { view: true, create: false, edit: false, delete: false }, invoices: { view: true, create: false, edit: false, delete: false }, inventory: { view: true, create: false, edit: false, delete: false }, journalVouchers: { view: true, create: false, edit: false, delete: false }, reports: { view: true }, employees: { view: true, create: false, edit: false, delete: false }, users: { view: false, create: false, edit: false, delete: false }, payroll: { view: true, create: false, edit: false, delete: false }, changeOrders: { view: true, create: false, edit: false, delete: false }, custody: { view: true, create: false, edit: false, delete: false }, vouchers: { view: true, create: false, edit: false, delete: false }, diagnostics: { view: false }, settings: { view: false, edit: false },
+        clients: { view: true, create: false, edit: false, delete: false }, suppliers: { view: true, create: false, edit: false, delete: false }, projects: { view: true, create: false, edit: false, delete: false }, chartOfAccounts: { view: true, create: false, edit: false, delete: false }, purchaseOrders: { view: true, create: false, edit: false, delete: false }, invoices: { view: true, create: false, edit: false, delete: false }, supplierBills: { view: true, create: false, edit: false, delete: false }, inventory: { view: true, create: false, edit: false, delete: false }, journalVouchers: { view: true, create: false, edit: false, delete: false }, reports: { view: true }, employees: { view: true, create: false, edit: false, delete: false }, users: { view: false, create: false, edit: false, delete: false }, payroll: { view: true, create: false, edit: false, delete: false }, changeOrders: { view: true, create: false, edit: false, delete: false }, custody: { view: true, create: false, edit: false, delete: false }, vouchers: { view: true, create: false, edit: false, delete: false }, diagnostics: { view: false }, settings: { view: false, edit: false },
     },
   },
 };
@@ -232,6 +235,32 @@ class Database {
   addProject = (data: Omit<Project, 'id'>) => this._add('projects', data, 'PROJ');
   updateProject = (data: Project) => this._update('projects', data);
   deleteProject = (id: string) => this._delete('projects', id);
+  public getProjectFinancialTransactions = (projectId: string): ProjectFinancialTransaction[] => {
+    const project = this.getProjectById(projectId);
+    if (!project) return [];
+
+    const transactions: ProjectFinancialTransaction[] = [];
+
+    this._data.invoices.filter(i => i.project === project.name).forEach(i => transactions.push({
+        id: `invoice-${i.id}`, date: i.issueDate, type: 'فاتورة عميل',
+        description: `فاتورة رقم ${i.id}`, income: i.amount, expense: 0,
+        relatedDocumentId: i.id
+    }));
+
+    this._data.supplierBills.filter(b => b.projectName === project.name).forEach(b => transactions.push({
+        id: `bill-${b.id}`, date: b.issueDate, type: 'فاتورة مورد',
+        description: `فاتورة من ${b.supplierName}`, income: 0, expense: b.amount,
+        relatedDocumentId: b.id
+    }));
+
+    this._data.custodies.filter(c => c.projectId === projectId && c.status === 'closed').forEach(c => transactions.push({
+        id: `custody-${c.id}`, date: c.date, type: 'تسوية عهدة',
+        description: `تسوية عهدة ${c.employeeName}`, income: 0, expense: c.settledAmount,
+        relatedDocumentId: c.id
+    }));
+    
+    return transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }
 
   // --- Clients ---
   getClients = () => this._getAll('clients');
@@ -413,6 +442,9 @@ class Database {
 
   // --- Supplier Bills ---
   getSupplierBills = () => this._getAll('supplierBills');
+  addSupplierBill = (data: Omit<SupplierBill, 'id'>) => this._add('supplierBills', data, 'BILL', { useYear: true });
+  updateSupplierBill = (data: SupplierBill) => this._update('supplierBills', data);
+  deleteSupplierBill = (id: string) => this._delete('supplierBills', id);
 
   // --- Tasks ---
   getTasksForProject = (projectId: string) => this._getAll('tasks').filter(t => t.projectId === projectId);
@@ -463,7 +495,6 @@ class Database {
 
   deleteAttachment = (id: string) => this._delete('attachments', id);
 
-
   // --- Settings ---
     getSettings = (): SettingsData => this._getAll('settings');
     updateSettings = (data: SettingsData): SettingsData => {
@@ -479,6 +510,16 @@ class Database {
         this._save();
         return data;
     }
+  
+  // --- AI Features ---
+  public getFinancialOverviewData = (): FinancialOverviewData => {
+    return {
+      projects: this._data.projects.map(({ name, budget, spent, status, startDate, endDate }) => ({ name, budget, spent, status, startDate, endDate })),
+      invoices: this._data.invoices.map(({ project, amount, status, issueDate, dueDate }) => ({ project, amount, status, issueDate, dueDate })),
+      supplierBills: this._data.supplierBills.map(({ projectName, amount, status, issueDate, dueDate }) => ({ projectName, amount, status, issueDate, dueDate })),
+      payrollRuns: this._data.payrollRuns.map(({ period, payDate, status, slips }) => ({ period, payDate, status, totalPaid: slips.reduce((sum, s) => sum + s.netPay, 0) })),
+    };
+  }
 
   // --- Data Management ---
   public exportAllData = (): string => {

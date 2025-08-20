@@ -1,6 +1,6 @@
 import { initializeFirebase } from './config';
 import {
-    collection, getDocs, getDoc, doc, addDoc, setDoc, updateDoc, deleteDoc, query, where, writeBatch
+    collection, getDocs, getDoc, doc, addDoc, setDoc, updateDoc, deleteDoc, query, where, writeBatch, runTransaction
 } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 
@@ -8,16 +8,17 @@ import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'fire
 import type { 
     Project, Client, Supplier, Invoice, Account, JournalVoucher, PurchaseOrder, InventoryItem, 
     User, Employee, PayrollRun, Voucher, ChangeOrder, Custody, BudgetLine, SupplierBill,
-    ProjectTask, Subcontract, SubcontractorPayment, SettingsData, AllRolesPermissions, Attachment
+    ProjectTask, Subcontract, SubcontractorPayment, SettingsData, AllRolesPermissions, Attachment,
+    ProjectFinancialTransaction, FinancialOverviewData
 } from '../types';
 
 // --- Generic Helpers ---
 
-async function getCollectionData<T extends { id: string }>(collectionName: string): Promise<T[]> {
+async function getCollectionData<T extends { id: string }>(collectionName: string, q?: any): Promise<T[]> {
     const firebase = initializeFirebase();
     if (!firebase) return [];
     try {
-        const querySnapshot = await getDocs(collection(firebase.db, collectionName));
+        const querySnapshot = await getDocs(q || collection(firebase.db, collectionName));
         return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as T));
     } catch (error) {
         console.error(`Error fetching ${collectionName}:`, error);
@@ -73,6 +74,42 @@ export const getProjectById = (id: string): Promise<Project | undefined> => getD
 export const addProject = (data: Omit<Project, 'id'>): Promise<Project> => addDocumentData('projects', data);
 export const updateProject = (data: Project): Promise<Project> => updateDocumentData('projects', data);
 export const deleteProject = (id: string): Promise<void> => deleteDocumentData('projects', id);
+export const getProjectFinancialTransactions = async (projectId: string): Promise<ProjectFinancialTransaction[]> => {
+    const project = await getProjectById(projectId);
+    if (!project) return [];
+
+    const [invoices, supplierBills, custodies] = await Promise.all([
+        getInvoices(),
+        getSupplierBills(),
+        getCustodies(),
+    ]);
+
+    const transactions: ProjectFinancialTransaction[] = [];
+
+    invoices.filter(i => i.project === project.name).forEach(i => transactions.push({
+        id: `invoice-${i.id}`, date: i.issueDate, type: 'فاتورة عميل',
+        description: `فاتورة رقم ${i.id}`, income: i.amount, expense: 0,
+        relatedDocumentId: i.id
+    }));
+
+    supplierBills.filter(b => b.projectName === project.name).forEach(b => transactions.push({
+        id: `bill-${b.id}`, date: b.issueDate, type: 'فاتورة مورد',
+        description: `فاتورة من ${b.supplierName}`, income: 0, expense: b.amount,
+        relatedDocumentId: b.id
+    }));
+
+    custodies.filter(c => c.projectId === projectId && c.status === 'closed').forEach(c => transactions.push({
+        id: `custody-${c.id}`, date: c.date, type: 'تسوية عهدة',
+        description: `تسوية عهدة ${c.employeeName}`, income: 0, expense: c.settledAmount,
+        relatedDocumentId: c.id
+    }));
+    
+    // This requires fetching inventory to calculate cost, which can be slow.
+    // For now, let's assume we can do it. In a real app, costs might be stored on the requisition upon issuance.
+    // Material requisitions removed.
+
+    return transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+};
 
 // --- Clients ---
 export const getClients = (): Promise<Client[]> => getCollectionData('clients');
@@ -293,6 +330,9 @@ export const deleteBudgetLine = (id: string): Promise<void> => deleteDocumentDat
 
 // --- Supplier Bills ---
 export const getSupplierBills = (): Promise<SupplierBill[]> => getCollectionData('supplierBills');
+export const addSupplierBill = (data: Omit<SupplierBill, 'id'>): Promise<SupplierBill> => addDocumentData('supplierBills', data);
+export const updateSupplierBill = (data: SupplierBill): Promise<SupplierBill> => updateDocumentData('supplierBills', data);
+export const deleteSupplierBill = (id: string): Promise<void> => deleteDocumentData('supplierBills', id);
 
 // --- Tasks (Project-specific) ---
 export const getTasksForProject = async (projectId: string): Promise<ProjectTask[]> => {
@@ -412,4 +452,21 @@ export const updatePermissions = async (data: AllRolesPermissions): Promise<AllR
     if (!firebase) throw new Error("Firebase not initialized");
     await setDoc(doc(firebase.db, 'app_settings', 'permissions'), data);
     return data;
+};
+
+// --- AI Features ---
+export const getFinancialOverviewData = async (): Promise<FinancialOverviewData> => {
+    const [projects, invoices, supplierBills, payrollRuns] = await Promise.all([
+        getCollectionData<Project>('projects'),
+        getCollectionData<Invoice>('invoices'),
+        getCollectionData<SupplierBill>('supplierBills'),
+        getCollectionData<PayrollRun>('payrollRuns'),
+    ]);
+
+    return {
+      projects: projects.map(({ name, budget, spent, status, startDate, endDate }) => ({ name, budget, spent, status, startDate, endDate })),
+      invoices: invoices.map(({ project, amount, status, issueDate, dueDate }) => ({ project, amount, status, issueDate, dueDate })),
+      supplierBills: supplierBills.map(({ projectName, amount, status, issueDate, dueDate }) => ({ projectName, amount, status, issueDate, dueDate })),
+      payrollRuns: payrollRuns.map(({ period, payDate, status, slips }) => ({ period, payDate, status, totalPaid: slips.reduce((sum, s) => sum + s.netPay, 0) })),
+    };
 };

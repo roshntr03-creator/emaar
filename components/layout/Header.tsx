@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, matchPath } from 'react-router-dom';
 import { Search, Bell, LogOut } from 'lucide-react';
@@ -14,7 +15,8 @@ const pageTitles: { [key: string]: string } = {
   '/purchase-orders': 'أوامر الشراء',
   '/subcontracts': 'عقود الباطن',
   '/subcontracts/:id': 'تفاصيل عقد الباطن',
-  '/invoices': 'الفواتير',
+  '/invoices': 'فواتير العملاء',
+  '/supplier-bills': 'فواتير الموردين',
   '/inventory': 'المخزون',
   '/journal-vouchers': 'القيود اليومية',
   '/reports': 'التقارير المالية',

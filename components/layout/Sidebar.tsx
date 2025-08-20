@@ -1,9 +1,10 @@
 
+
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
     LayoutDashboard, Briefcase, Users, User, Building, FileText, ShoppingCart, Warehouse, Book, 
-    Contact, DollarSign, Repeat, HandCoins, Receipt, HeartPulse, Settings, FileSpreadsheet, ClipboardSignature
+    Contact, DollarSign, Repeat, HandCoins, Receipt, HeartPulse, Settings, FileSpreadsheet, ClipboardSignature, FileArchive
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -41,9 +42,10 @@ const Sidebar: React.FC = () => {
     { to: '/projects', icon: <Briefcase size={20} />, label: 'المشاريع', module: 'projects' },
     { to: '/clients', icon: <Users size={20} />, label: 'العملاء', module: 'clients' },
     { to: '/suppliers', icon: <Building size={20} />, label: 'الموردون', module: 'suppliers' },
-    { to: '/invoices', icon: <FileText size={20} />, label: 'الفواتير', module: 'invoices' },
+    { to: '/invoices', icon: <FileText size={20} />, label: 'فواتير العملاء', module: 'invoices' },
+    { to: '/supplier-bills', icon: <FileArchive size={20} />, label: 'فواتير الموردين', module: 'supplierBills' },
     { to: '/purchase-orders', icon: <ShoppingCart size={20} />, label: 'أوامر الشراء', module: 'purchaseOrders' },
-    { to: '/subcontracts', icon: <ClipboardSignature size={20} />, label: 'عقود الباطن', module: 'projects' }, // Subcontracts fall under projects
+    { to: '/subcontracts', icon: <ClipboardSignature size={20} />, label: 'عقود الباطن', module: 'subcontracts' },
     { to: '/vouchers', icon: <Receipt size={20} />, label: 'السندات', module: 'vouchers' },
     { to: '/employees', icon: <Contact size={20} />, label: 'الموظفون', module: 'employees' },
     { to: '/payroll', icon: <DollarSign size={20} />, label: 'الرواتب', module: 'payroll' },

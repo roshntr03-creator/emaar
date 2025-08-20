@@ -1,5 +1,7 @@
 {
   "name": "Copy of Copy of نظام محاسبة للمقاولات34",
   "description": "نظام محاسبة متكامل لإدارة شركات المقاولات، يشمل إدارة المشاريع، العملاء، الموردين، الحسابات، والمزيد.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "camera"
+  ]
 }

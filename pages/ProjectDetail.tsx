@@ -1,14 +1,15 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Briefcase, Calendar, User, ArrowLeft, PlusCircle, Edit, Trash2, GanttChartSquare, Loader2, FileArchive } from 'lucide-react';
+import { Briefcase, Calendar, User, ArrowLeft, PlusCircle, Edit, Trash2, GanttChartSquare, Loader2, FileArchive, DollarSign } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Gantt, ViewMode, Task } from 'gantt-task-react';
 import Card from '../components/ui/Card';
 import Tabs from '../components/ui/Tabs';
 import Modal from '../components/ui/Modal';
 import AttachmentsManager from '../components/AttachmentsManager';
-import type { Project, Invoice, PurchaseOrder, ChangeOrder, Custody, BudgetLine, ProjectTask } from '../types';
+import type { Project, BudgetLine, ProjectTask, ProjectFinancialTransaction } from '../types';
 import * as api from '../api';
+import { useAuth } from '../contexts/AuthContext';
 
 
 const getStatusChip = (status: 'active' | 'completed' | 'on_hold') => {
@@ -18,6 +19,66 @@ const getStatusChip = (status: 'active' | 'completed' | 'on_hold') => {
     case 'on_hold': return <span className="px-3 py-1 text-sm font-semibold text-yellow-800 bg-yellow-100 rounded-full">متوقف</span>;
   }
 };
+
+// --- Financials Tab Component ---
+const FinancialsTabContent: React.FC<{ transactions: ProjectFinancialTransaction[] }> = ({ transactions }) => {
+    const { totals, sortedTransactions } = useMemo(() => {
+        const sorted = [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        const totals = sorted.reduce((acc, t) => {
+            acc.income += t.income;
+            acc.expense += t.expense;
+            return acc;
+        }, { income: 0, expense: 0 });
+        return { totals, sortedTransactions: sorted };
+    }, [transactions]);
+    
+    const balance = totals.income - totals.expense;
+
+    return (
+        <div>
+            <div className="grid grid-cols-3 gap-4 mb-4 text-center">
+                <div className="p-4 bg-green-50 rounded-lg">
+                    <p className="text-sm text-gray-600">إجمالي الإيرادات</p>
+                    <p className="text-xl font-bold text-green-700">﷼{totals.income.toLocaleString()}</p>
+                </div>
+                <div className="p-4 bg-red-50 rounded-lg">
+                    <p className="text-sm text-gray-600">إجمالي التكاليف</p>
+                    <p className="text-xl font-bold text-red-700">﷼{totals.expense.toLocaleString()}</p>
+                </div>
+                <div className={`p-4 rounded-lg ${balance >= 0 ? 'bg-blue-50' : 'bg-red-50'}`}>
+                    <p className="text-sm text-gray-600">الربحية الحالية</p>
+                    <p className={`text-xl font-bold ${balance >= 0 ? 'text-blue-700' : 'text-red-700'}`}>﷼{balance.toLocaleString()}</p>
+                </div>
+            </div>
+
+            <div className="overflow-x-auto">
+                <table className="min-w-full bg-white text-right text-sm">
+                    <thead className="bg-gray-50">
+                        <tr>
+                            <th className="p-3 border-b">التاريخ</th>
+                            <th className="p-3 border-b">النوع</th>
+                            <th className="p-3 border-b">البيان</th>
+                            <th className="p-3 border-b">إيراد</th>
+                            <th className="p-3 border-b">تكلفة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {sortedTransactions.map(tx => (
+                            <tr key={tx.id}>
+                                <td className="p-3 border-b">{tx.date}</td>
+                                <td className="p-3 border-b">{tx.type}</td>
+                                <td className="p-3 border-b">{tx.description}</td>
+                                <td className="p-3 border-b text-green-600">{tx.income > 0 ? `﷼${tx.income.toLocaleString()}` : '-'}</td>
+                                <td className="p-3 border-b text-red-600">{tx.expense > 0 ? `﷼${tx.expense.toLocaleString()}` : '-'}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+};
+
 
 // --- Timeline Tab Component ---
 interface TimelineTabContentProps {
@@ -337,55 +398,45 @@ const BudgetTabContent: React.FC<BudgetTabContentProps> = ({ lines, onAdd, onUpd
 const ProjectDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const [isLoading, setIsLoading] = useState(true);
-
+    const { hasPermission } = useAuth();
+    
+    // Data states
     const [project, setProject] = useState<Project | null>(null);
     const [budgetLines, setBudgetLines] = useState<BudgetLine[]>([]);
     const [tasks, setTasks] = useState<ProjectTask[]>([]);
-    const [invoices, setInvoices] = useState<Invoice[]>([]);
-    const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
-    const [changeOrders, setChangeOrders] = useState<ChangeOrder[]>([]);
-    const [custodies, setCustodies] = useState<Custody[]>([]);
+    const [financialTransactions, setFinancialTransactions] = useState<ProjectFinancialTransaction[]>([]);
 
-    const fetchData = async (projectId: string) => {
-        setIsLoading(true);
-        try {
-            const [
-                projectData,
-                budgetLinesData,
-                tasksData,
-                allInvoices,
-                allPOs,
-                allCOs,
-                allCustodies
-            ] = await Promise.all([
-                api.getProjectById(projectId),
-                api.getBudgetLinesForProject(projectId),
-                api.getTasksForProject(projectId),
-                api.getInvoices(),
-                api.getPurchaseOrders(),
-                api.getChangeOrders(),
-                api.getCustodies(),
-            ]);
-
-            if (projectData) {
-                setProject(projectData);
-                setBudgetLines(budgetLinesData);
-                setTasks(tasksData);
-                setInvoices(allInvoices.filter(i => i.project === projectData.name));
-                setPurchaseOrders(allPOs.filter(po => po.projectName === projectData.name));
-                setChangeOrders(allCOs.filter(co => co.projectName === projectData.name));
-                setCustodies(allCustodies.filter(c => c.projectId === projectData.id));
-            } else {
-                setProject(null); // Project not found
-            }
-        } catch (error) {
-            console.error("Failed to load project details:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-    
     useEffect(() => {
+        const fetchData = async (projectId: string) => {
+            setIsLoading(true);
+            try {
+                const [
+                    projectData,
+                    budgetLinesData,
+                    tasksData,
+                    financialsData,
+                ] = await Promise.all([
+                    api.getProjectById(projectId),
+                    api.getBudgetLinesForProject(projectId),
+                    api.getTasksForProject(projectId),
+                    api.getProjectFinancialTransactions(projectId),
+                ]);
+
+                if (projectData) {
+                    setProject(projectData);
+                    setBudgetLines(budgetLinesData);
+                    setTasks(tasksData);
+                    setFinancialTransactions(financialsData);
+                } else {
+                    setProject(null);
+                }
+            } catch (error) {
+                console.error("Failed to load project details:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        
         if (id) {
             fetchData(id);
         } else {
@@ -433,16 +484,29 @@ const ProjectDetail: React.FC = () => {
         setTasks(updatedTasks);
     };
 
-    const detailedProject = useMemo(() => {
-        if (!project) return null;
-        if (budgetLines.length > 0) {
-            const totalBudget = budgetLines.reduce((sum, item) => sum + item.budgetAmount, 0);
-            const totalSpent = budgetLines.reduce((sum, item) => sum + item.actualAmount, 0);
-            return { ...project, budget: totalBudget, spent: totalSpent };
-        }
-        return project;
-    }, [project, budgetLines]);
+    // Memoized financial calculations based on the single source of truth
+    const financialSummary = useMemo(() => {
+        const summary = financialTransactions.reduce((acc, tx) => {
+            acc.totalIncome += tx.income;
+            acc.totalExpense += tx.expense;
+            return acc;
+        }, { totalIncome: 0, totalExpense: 0 });
+        
+        const profitability = summary.totalIncome - summary.totalExpense;
+        return { ...summary, profitability };
+    }, [financialTransactions]);
+    
+    // The main project budget is now the sum of budget lines for accuracy
+    const projectBudget = useMemo(() => budgetLines.reduce((sum, item) => sum + item.budgetAmount, 0), [budgetLines]);
+    const projectSpent = financialSummary.totalExpense;
+    const progress = projectBudget > 0 ? Math.min(Math.round((projectSpent / projectBudget) * 100), 100) : 0;
+    const remainingBudget = Math.max(0, projectBudget - projectSpent);
 
+    const financialBreakdownData = [
+        { name: 'المصروفات', value: projectSpent },
+        { name: 'المتبقي من الميزانية', value: remainingBudget },
+    ];
+    const COLORS = ['#EF4444', '#22C55E'];
 
     if (isLoading) {
         return (
@@ -453,7 +517,7 @@ const ProjectDetail: React.FC = () => {
         );
     }
 
-    if (!detailedProject) {
+    if (!project) {
         return (
             <div className="text-center p-10">
                 <h2 className="text-2xl font-bold text-red-600">المشروع غير موجود</h2>
@@ -461,19 +525,9 @@ const ProjectDetail: React.FC = () => {
             </div>
         );
     }
-
-    const totalInvoiced = invoices.reduce((sum, inv) => sum + inv.amount, 0);
-    const profitability = totalInvoiced - detailedProject.spent;
-    const progress = detailedProject.budget > 0 ? Math.min(Math.round((detailedProject.spent / detailedProject.budget) * 100), 100) : 0;
-    const remainingBudget = Math.max(0, detailedProject.budget - detailedProject.spent);
-
-    const financialBreakdownData = [
-        { name: 'المصروفات', value: detailedProject.spent },
-        { name: 'المتبقي من الميزانية', value: remainingBudget },
-    ];
-    const COLORS = ['#EF4444', '#22C55E'];
-
+    
     const tabs = [
+        { id: 'financials', label: `البيانات المالية (${financialTransactions.length})`, content: <FinancialsTabContent transactions={financialTransactions} /> },
         { id: 'timeline', label: `الجدول الزمني (${tasks.length})`, content: (
             <TimelineTabContent tasks={tasks} onSave={handleSaveTask} onDelete={handleDeleteTask} />
         )},
@@ -486,39 +540,15 @@ const ProjectDetail: React.FC = () => {
             />
         )},
         { id: 'documents', label: `المستندات`, content: (
-             <AttachmentsManager relatedId={detailedProject.id} relatedType="project" />
-        )},
-        { id: 'invoices', label: `الفواتير (${invoices.length})`, content: (
-            <table className="min-w-full bg-white text-right text-sm">
-                <thead className="bg-gray-50"><tr><th className="p-2 border-b">الرقم</th><th className="p-2 border-b">المبلغ</th><th className="p-2 border-b">تاريخ الإصدار</th><th className="p-2 border-b">الحالة</th></tr></thead>
-                <tbody>{invoices.length > 0 ? invoices.map(i => <tr key={i.id}><td className="p-2 border-b">{i.id}</td><td className="p-2 border-b">﷼{i.amount.toLocaleString()}</td><td className="p-2 border-b">{i.issueDate}</td><td className="p-2 border-b">{i.status}</td></tr>) : <tr><td colSpan={4} className="text-center p-4 text-gray-500">لا توجد فواتير لهذا المشروع.</td></tr>}</tbody>
-            </table>
-        )},
-        { id: 'pos', label: `أوامر الشراء (${purchaseOrders.length})`, content: (
-             <table className="min-w-full bg-white text-right text-sm">
-                <thead className="bg-gray-50"><tr><th className="p-2 border-b">الرقم</th><th className="p-2 border-b">المورد</th><th className="p-2 border-b">التاريخ</th><th className="p-2 border-b">الحالة</th></tr></thead>
-                <tbody>{purchaseOrders.length > 0 ? purchaseOrders.map(po => <tr key={po.id}><td className="p-2 border-b">{po.id}</td><td className="p-2 border-b">{po.supplierName}</td><td className="p-2 border-b">{po.date}</td><td className="p-2 border-b">{po.status}</td></tr>) : <tr><td colSpan={4} className="text-center p-4 text-gray-500">لا توجد أوامر شراء لهذا المشروع.</td></tr>}</tbody>
-            </table>
-        )},
-        { id: 'cos', label: `أوامر التغيير (${changeOrders.length})`, content: (
-            <table className="min-w-full bg-white text-right text-sm">
-                <thead className="bg-gray-50"><tr><th className="p-2 border-b">الرقم</th><th className="p-2 border-b">الوصف</th><th className="p-2 border-b">المبلغ</th><th className="p-2 border-b">الحالة</th></tr></thead>
-                <tbody>{changeOrders.length > 0 ? changeOrders.map(co => <tr key={co.id}><td className="p-2 border-b">{co.id}</td><td className="p-2 border-b">{co.description}</td><td className="p-2 border-b">﷼{co.amount.toLocaleString()}</td><td className="p-2 border-b">{co.status}</td></tr>) : <tr><td colSpan={4} className="text-center p-4 text-gray-500">لا توجد أوامر تغيير لهذا المشروع.</td></tr>}</tbody>
-            </table>
-        )},
-        { id: 'custodies', label: `العهد (${custodies.length})`, content: (
-            <table className="min-w-full bg-white text-right text-sm">
-                <thead className="bg-gray-50"><tr><th className="p-2 border-b">الرقم</th><th className="p-2 border-b">الموظف</th><th className="p-2 border-b">المبلغ</th><th className="p-2 border-b">المتبقي</th><th className="p-2 border-b">الحالة</th></tr></thead>
-                <tbody>{custodies.length > 0 ? custodies.map(c => <tr key={c.id}><td className="p-2 border-b">{c.id}</td><td className="p-2 border-b">{c.employeeName}</td><td className="p-2 border-b">﷼{c.amount.toLocaleString()}</td><td className="p-2 border-b">﷼{(c.amount - c.settledAmount).toLocaleString()}</td><td className="p-2 border-b">{c.status}</td></tr>) : <tr><td colSpan={5} className="text-center p-4 text-gray-500">لا توجد عهد لهذا المشروع.</td></tr>}</tbody>
-            </table>
+             <AttachmentsManager relatedId={project.id} relatedType="project" />
         )},
     ];
-
+    
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold text-gray-800">
-                    تفاصيل المشروع: <span className="text-blue-600">{detailedProject.name}</span>
+                    تفاصيل المشروع: <span className="text-blue-600">{project.name}</span>
                 </h1>
                 <Link to="/projects" className="flex items-center px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 border rounded-md hover:bg-gray-200">
                     <ArrowLeft size={16} className="ml-2" />
@@ -528,10 +558,10 @@ const ProjectDetail: React.FC = () => {
 
             <Card title="ملخص المشروع">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-gray-700">
-                    <div className="flex items-center"><User size={16} className="ml-2 text-gray-500" /> <strong>العميل:</strong> <span className="mr-2">{detailedProject.client}</span></div>
-                    <div className="flex items-center"><Calendar size={16} className="ml-2 text-gray-500" /> <strong>تاريخ البدء:</strong> <span className="mr-2">{detailedProject.startDate}</span></div>
-                    <div className="flex items-center"><Calendar size={16} className="ml-2 text-gray-500" /> <strong>تاريخ الانتهاء:</strong> <span className="mr-2">{detailedProject.endDate}</span></div>
-                    <div className="flex items-center"><strong>الحالة:</strong> <span className="mr-2">{getStatusChip(detailedProject.status)}</span></div>
+                    <div className="flex items-center"><User size={16} className="ml-2 text-gray-500" /> <strong>العميل:</strong> <span className="mr-2">{project.client}</span></div>
+                    <div className="flex items-center"><Calendar size={16} className="ml-2 text-gray-500" /> <strong>تاريخ البدء:</strong> <span className="mr-2">{project.startDate}</span></div>
+                    <div className="flex items-center"><Calendar size={16} className="ml-2 text-gray-500" /> <strong>تاريخ الانتهاء:</strong> <span className="mr-2">{project.endDate}</span></div>
+                    <div className="flex items-center"><strong>الحالة:</strong> <span className="mr-2">{getStatusChip(project.status)}</span></div>
                 </div>
             </Card>
             
@@ -547,10 +577,10 @@ const ProjectDetail: React.FC = () => {
                         </div>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                        <div><p className="text-sm text-gray-500">الميزانية</p><p className="text-xl font-bold">﷼{detailedProject.budget.toLocaleString()}</p></div>
-                        <div><p className="text-sm text-gray-500">المصروفات</p><p className="text-xl font-bold text-red-600">﷼{detailedProject.spent.toLocaleString()}</p></div>
+                        <div><p className="text-sm text-gray-500">الميزانية</p><p className="text-xl font-bold">﷼{projectBudget.toLocaleString()}</p></div>
+                        <div><p className="text-sm text-gray-500">المصروفات</p><p className="text-xl font-bold text-red-600">﷼{projectSpent.toLocaleString()}</p></div>
                         <div><p className="text-sm text-gray-500">المتبقي</p><p className="text-xl font-bold text-green-600">﷼{remainingBudget.toLocaleString()}</p></div>
-                        <div><p className="text-sm text-gray-500">الربحية</p><p className={`text-xl font-bold ${profitability >= 0 ? 'text-green-600' : 'text-red-600'}`}>﷼{profitability.toLocaleString()}</p></div>
+                        <div><p className="text-sm text-gray-500">الربحية</p><p className={`text-xl font-bold ${financialSummary.profitability >= 0 ? 'text-green-600' : 'text-red-600'}`}>﷼{financialSummary.profitability.toLocaleString()}</p></div>
                     </div>
                 </Card>
 
@@ -569,8 +599,8 @@ const ProjectDetail: React.FC = () => {
                 </Card>
             </div>
 
-            <Card title="البيانات المرتبطة بالمشروع">
-                <Tabs tabs={tabs} initialTabId="timeline" />
+            <Card title="تفاصيل وبيانات المشروع">
+                <Tabs tabs={tabs} initialTabId="financials" />
             </Card>
             <style>{`
                 .gantt-container .bar-wrapper {

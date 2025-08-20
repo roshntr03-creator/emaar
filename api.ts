@@ -2,7 +2,8 @@ import { db } from './database';
 import type { 
     Project, Client, Supplier, Invoice, Account, JournalVoucher, PurchaseOrder, InventoryItem, 
     User, Employee, PayrollRun, Voucher, ChangeOrder, Custody, BudgetLine, SupplierBill,
-    ProjectTask, Subcontract, SubcontractorPayment, SettingsData, AllRolesPermissions, Attachment
+    ProjectTask, Subcontract, SubcontractorPayment, SettingsData, AllRolesPermissions, Attachment,
+    ProjectFinancialTransaction, FinancialOverviewData
 } from './types';
 
 const LATENCY = 300; // ms
@@ -21,6 +22,8 @@ export const getProjectById = async (id: string): Promise<Project | undefined> =
 export const addProject = async (data: Omit<Project, 'id'>): Promise<Project> => simulateNetwork(db.addProject(data));
 export const updateProject = async (data: Project): Promise<Project | null> => simulateNetwork(db.updateProject(data));
 export const deleteProject = async (id: string): Promise<void> => simulateNetwork(db.deleteProject(id));
+export const getProjectFinancialTransactions = async (projectId: string): Promise<ProjectFinancialTransaction[]> => simulateNetwork(db.getProjectFinancialTransactions(projectId));
+
 
 // --- Clients ---
 export const getClients = async (): Promise<Client[]> => simulateNetwork(db.getClients());
@@ -110,6 +113,9 @@ export const deleteBudgetLine = async (id: string): Promise<void> => simulateNet
 
 // --- Supplier Bills ---
 export const getSupplierBills = async (): Promise<SupplierBill[]> => simulateNetwork(db.getSupplierBills());
+export const addSupplierBill = async (data: Omit<SupplierBill, 'id'>): Promise<SupplierBill> => simulateNetwork(db.addSupplierBill(data));
+export const updateSupplierBill = async (data: SupplierBill): Promise<SupplierBill | null> => simulateNetwork(db.updateSupplierBill(data));
+export const deleteSupplierBill = async (id: string): Promise<void> => simulateNetwork(db.deleteSupplierBill(id));
 
 // --- Tasks ---
 export const getTasksForProject = async (projectId: string): Promise<ProjectTask[]> => simulateNetwork(db.getTasksForProject(projectId));
@@ -143,6 +149,9 @@ export const updateSettings = async (data: SettingsData): Promise<SettingsData> 
 // --- Permissions ---
 export const getPermissions = async (): Promise<AllRolesPermissions> => simulateNetwork(db.getPermissions());
 export const updatePermissions = async (data: AllRolesPermissions): Promise<AllRolesPermissions> => simulateNetwork(db.updatePermissions(data));
+
+// --- AI Features ---
+export const getFinancialOverviewData = async (): Promise<FinancialOverviewData> => simulateNetwork(db.getFinancialOverviewData());
 
 // --- Data Management ---
 export const exportAllData = (): string => db.exportAllData();

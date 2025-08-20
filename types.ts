@@ -228,6 +228,58 @@ export interface Attachment {
 }
 
 
+// --- AI Features ---
+export interface ProjectCostEstimate {
+  estimatedTotalBudget: number;
+  costBreakdown: {
+    category: string;
+    amount: number;
+    description: string;
+  }[];
+  assumptions: string[];
+  confidenceScore: number; // 0-100
+  suggestedProjectName: string;
+}
+
+// --- Refactored Project Financials ---
+export interface ProjectFinancialTransaction {
+  id: string; // unique key for react list, can be `type-id`
+  date: string;
+  type: 'فاتورة عميل' | 'فاتورة مورد' | 'تسوية عهدة';
+  description: string;
+  income: number;
+  expense: number;
+  relatedDocumentId: string;
+}
+
+// --- AI Financial Analyst ---
+export interface AiDataTable {
+  headers: string[];
+  rows: string[][];
+}
+
+export interface AiChartData {
+  type: 'bar' | 'line';
+  labels: string[];
+  datasets: {
+    label: string;
+    data: number[];
+  }[];
+}
+
+export interface AiFinancialResponse {
+  insight: string;
+  table?: AiDataTable;
+  chart?: AiChartData;
+}
+
+export interface FinancialOverviewData {
+    projects: Pick<Project, 'name' | 'budget' | 'spent' | 'status' | 'startDate' | 'endDate'>[];
+    invoices: Pick<Invoice, 'project' | 'amount' | 'status' | 'issueDate' | 'dueDate'>[];
+    supplierBills: Pick<SupplierBill, 'projectName' | 'amount' | 'status' | 'issueDate' | 'dueDate'>[];
+    payrollRuns: { period: string; payDate: string; status: PayrollRun['status']; totalPaid: number }[];
+}
+
 // --- Settings & Permissions ---
 
 export type PermissionAction = 'view' | 'create' | 'edit' | 'delete';
