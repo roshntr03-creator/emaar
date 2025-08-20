@@ -558,7 +558,7 @@ class Database {
       projects: this._data.projects.map(({ name, budget, spent, status, startDate, endDate }) => ({ name, budget, spent, status, startDate, endDate })),
       invoices: this._data.invoices.map(({ project, amount, status, issueDate, dueDate }) => ({ project, amount, status, issueDate, dueDate })),
       supplierBills: this._data.supplierBills.map(({ projectName, amount, status, issueDate, dueDate }) => ({ projectName, amount, status, issueDate, dueDate })),
-      payrollRuns: this._data.payrollRuns.map(({ period, payDate, status, slips }) => ({ period, payDate, status, totalPaid: slips.reduce((sum, s) => sum + s.netPay, 0) })),
+      payrollRuns: this._data.payrollRuns.map(({ period, payDate, status, slips }) => ({ period, payDate, status, totalPaid: (slips || []).reduce((sum, s) => sum + s.netPay, 0) })),
     }
   }
 

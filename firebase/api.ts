@@ -498,7 +498,7 @@ export const getFinancialOverviewData = async (): Promise<FinancialOverviewData>
       projects: projects.map(({ name, budget, spent, status, startDate, endDate }) => ({ name, budget, spent, status, startDate, endDate })),
       invoices: invoices.map(({ project, amount, status, issueDate, dueDate }) => ({ project, amount, status, issueDate, dueDate })),
       supplierBills: supplierBills.map(({ projectName, amount, status, issueDate, dueDate }) => ({ projectName, amount, status, issueDate, dueDate })),
-      payrollRuns: payrollRuns.map(({ period, payDate, status, slips }) => ({ period, payDate, status, totalPaid: slips.reduce((sum, s) => sum + s.netPay, 0) })),
+      payrollRuns: payrollRuns.map(({ period, payDate, status, slips }) => ({ period, payDate, status, totalPaid: (slips || []).reduce((sum, s) => sum + s.netPay, 0) })),
     };
 };
 
