@@ -76,7 +76,7 @@ const FirebaseConfigManager: React.FC<FirebaseConfigManagerProps> = ({ onConfigS
             {Object.keys(configInputs).map(key => (
                 <div key={key}>
                     <label htmlFor={key} className="block text-xs font-medium text-gray-600">{key}</label>
-                    <input type="text" id={key} name={key} value={configInputs[key as keyof FirebaseConfig]} onChange={handleConfigChange} className="w-full text-sm mt-1 px-2 py-1 border border-gray-300 rounded-md shadow-sm font-mono" />
+                    <input type="text" id={key} name={key} value={configInputs[key as keyof FirebaseConfig]} onChange={handleConfigChange} className="w-full text-sm mt-1 px-2 py-1 border border-gray-300 rounded-md shadow-sm font-mono" dir="ltr" />
                 </div>
             ))}
             <div className="flex flex-col sm:flex-row gap-2 pt-2">
