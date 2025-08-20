@@ -94,14 +94,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string): Promise<{ success: boolean, message: string }> => {
     if (usingFirebase) {
         const firebaseServices = initializeFirebase();
-        if (!firebaseServices) return { success: false, message: "Firebase not configured correctly." };
+        if (!firebaseServices) return { success: false, message: "لم يتم تكوين Firebase بشكل صحيح. يرجى الذهاب إلى الإعدادات." };
         const auth = firebaseServices.auth;
         try {
             await signInWithEmailAndPassword(auth, email, password);
             return { success: true, message: "تم تسجيل الدخول بنجاح." };
         } catch (error) {
             console.error("Firebase login error:", error);
-            return { success: false, message: "البريد الإلكتروني أو كلمة المرور غير صحيحة. تحقق من لوحة التحكم لمزيد من التفاصيل." };
+            let message = "حدث خطأ غير متوقع أثناء تسجيل الدخول.";
+
+            if (error && typeof error === 'object' && 'code' in error) {
+                switch ((error as { code: string }).code) {
+                    case 'auth/invalid-credential':
+                        message = "فشل تسجيل الدخول. يرجى التحقق من البريد الإلكتروني وكلمة المرور. إذا كنت متأكداً من صحتهما، تأكد من أنك قمت بإعداد معلومات اتصال Firebase بشكل صحيح في صفحة 'الإعدادات' وأن المستخدم موجود ومفعّل في مشروع Firebase الخاص بك.";
+                        break;
+                    case 'auth/user-disabled':
+                        message = "تم تعطيل هذا الحساب. يرجى التواصل مع المسؤول.";
+                        break;
+                    case 'auth/network-request-failed':
+                         message = "فشل الاتصال بالشبكة. يرجى التحقق من اتصالك بالإنترنت.";
+                         break;
+                    default:
+                        message = "حدث خطأ غير متوقع. يرجى مراجعة إعدادات Firebase والمحاولة مرة أخرى.";
+                }
+            }
+            return { success: false, message: message };
         }
     } else {
         const users = await localApi.getUsers();
