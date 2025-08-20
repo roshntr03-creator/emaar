@@ -38,7 +38,6 @@ const Login: React.FC = () => {
   
   const handleConfigSaved = () => {
       setIsConfigModalOpen(false);
-      window.location.reload();
   };
 
 

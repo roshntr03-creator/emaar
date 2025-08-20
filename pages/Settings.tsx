@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Building, Settings as SettingsIcon, Banknote, Bell, Shield, KeyRound, Loader2, Database, Download, AlertTriangle, Cloud, UploadCloud } from 'lucide-react';
 import type { User, AllRolesPermissions, SettingsData, PermissionAction, ModulePermissions, FirebaseConfig } from '../types';
@@ -141,7 +142,7 @@ const DataManagementTab: React.FC = () => {
                 </p>
 
                 <div className="mt-4">
-                   <FirebaseConfigManager onConfigSaved={() => window.location.reload()} />
+                   <FirebaseConfigManager onConfigSaved={() => {}} />
                 </div>
                 
                 <div className="mt-4">

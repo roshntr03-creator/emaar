@@ -23,7 +23,7 @@ const FirebaseConfigManager: React.FC<FirebaseConfigManagerProps> = ({ onConfigS
     const handleSaveConfig = () => {
         saveFirebaseConfig(configInputs);
         setFirebaseConfig(configInputs);
-        alert('تم حفظ إعدادات Firebase. سيتم الآن إعادة تحميل الصفحة لتطبيق التغييرات.');
+        alert('تم حفظ إعدادات Firebase. يرجى إعادة تحميل الصفحة لتطبيق التغييرات.');
         if (onConfigSaved) {
             onConfigSaved();
         }
@@ -34,7 +34,7 @@ const FirebaseConfigManager: React.FC<FirebaseConfigManagerProps> = ({ onConfigS
             clearFirebaseConfig();
             setFirebaseConfig(null);
             setConfigInputs({ apiKey: '', authDomain: '', projectId: '', storageBucket: '', messagingSenderId: '', appId: '' });
-            alert('تم حذف إعدادات Firebase. سيتم الآن إعادة تحميل الصفحة.');
+            alert('تم حذف إعدادات Firebase. يرجى إعادة تحميل الصفحة لتطبيق التغييرات.');
              if (onConfigSaved) {
                 onConfigSaved();
             }
