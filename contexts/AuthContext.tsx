@@ -100,7 +100,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             await signInWithEmailAndPassword(auth, email, password);
             return { success: true, message: "تم تسجيل الدخول بنجاح." };
         } catch (error) {
-            return { success: false, message: "البريد الإلكتروني أو كلمة المرور غير صحيحة." };
+            console.error("Firebase login error:", error);
+            return { success: false, message: "البريد الإلكتروني أو كلمة المرور غير صحيحة. تحقق من لوحة التحكم لمزيد من التفاصيل." };
         }
     } else {
         const users = await localApi.getUsers();

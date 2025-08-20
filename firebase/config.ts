@@ -1,4 +1,4 @@
-import * as firebaseAppModule from 'firebase/app';
+import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore, writeBatch, doc } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
@@ -7,7 +7,7 @@ import { db } from '../database';
 
 const FIREBASE_CONFIG_KEY = 'firebase_config';
 
-let firebaseApp: firebaseAppModule.FirebaseApp | null = null;
+let firebaseApp: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let firestore: Firestore | null = null;
 let storage: FirebaseStorage | null = null;
@@ -35,7 +35,7 @@ export const isFirebaseConfigured = (): boolean => {
 };
 
 
-export const initializeFirebase = (): { app: firebaseAppModule.FirebaseApp, auth: Auth, db: Firestore, storage: FirebaseStorage } | null => {
+export const initializeFirebase = (): { app: FirebaseApp, auth: Auth, db: Firestore, storage: FirebaseStorage } | null => {
     if (firebaseApp && auth && firestore && storage) {
         return { app: firebaseApp, auth, db: firestore, storage: storage };
     }
@@ -43,10 +43,10 @@ export const initializeFirebase = (): { app: firebaseAppModule.FirebaseApp, auth
     const config = getFirebaseConfig();
     if (config) {
         try {
-            if (!firebaseAppModule.getApps().length) {
-                firebaseApp = firebaseAppModule.initializeApp(config);
+            if (!getApps().length) {
+                firebaseApp = initializeApp(config);
             } else {
-                firebaseApp = firebaseAppModule.getApp();
+                firebaseApp = getApp();
             }
             auth = getAuth(firebaseApp);
             firestore = getFirestore(firebaseApp);
