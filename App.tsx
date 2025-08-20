@@ -3,7 +3,6 @@
 import React from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import { ApiKeyProvider } from './contexts/ApiKeyContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import MainLayout from './components/layout/MainLayout';
 import Login from './pages/Login';
@@ -34,43 +33,41 @@ import Documents from './pages/Documents';
 
 const App: React.FC = () => {
   return (
-    <ApiKeyProvider>
-      <AuthProvider>
-        <HashRouter>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route element={<ProtectedRoute />}>
-              <Route element={<MainLayout />}>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/projects" element={<Projects />} />
-                <Route path="/projects/:id" element={<ProjectDetail />} />
-                <Route path="/clients" element={<Clients />} />
-                <Route path="/suppliers" element={<Suppliers />} />
-                <Route path="/chart-of-accounts" element={<ChartOfAccounts />} />
-                <Route path="/purchase-orders" element={<PurchaseOrders />} />
-                <Route path="/subcontracts" element={<Subcontracts />} />
-                <Route path="/subcontracts/:id" element={<SubcontractDetail />} />
-                <Route path="/invoices" element={<Invoices />} />
-                <Route path="/supplier-bills" element={<SupplierBills />} />
-                <Route path="/inventory" element={<Inventory />} />
-                <Route path="/journal-vouchers" element={<JournalVouchers />} />
-                <Route path="/reports" element={<Reports />} />
-                <Route path="/employees" element={<Employees />} />
-                <Route path="/users" element={<Users />} />
-                <Route path="/payroll" element={<Payroll />} />
-                <Route path="/change-orders" element={<ChangeOrders />} />
-                <Route path="/custody" element={<Custody />} />
-                <Route path="/vouchers" element={<Vouchers />} />
-                <Route path="/assets" element={<Assets />} />
-                <Route path="/documents" element={<Documents />} />
-                <Route path="/diagnostics" element={<Diagnostics />} />
-                <Route path="/settings" element={<Settings />} />
-              </Route>
+    <AuthProvider>
+      <HashRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route element={<ProtectedRoute />}>
+            <Route element={<MainLayout />}>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/projects" element={<Projects />} />
+              <Route path="/projects/:id" element={<ProjectDetail />} />
+              <Route path="/clients" element={<Clients />} />
+              <Route path="/suppliers" element={<Suppliers />} />
+              <Route path="/chart-of-accounts" element={<ChartOfAccounts />} />
+              <Route path="/purchase-orders" element={<PurchaseOrders />} />
+              <Route path="/subcontracts" element={<Subcontracts />} />
+              <Route path="/subcontracts/:id" element={<SubcontractDetail />} />
+              <Route path="/invoices" element={<Invoices />} />
+              <Route path="/supplier-bills" element={<SupplierBills />} />
+              <Route path="/inventory" element={<Inventory />} />
+              <Route path="/journal-vouchers" element={<JournalVouchers />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/employees" element={<Employees />} />
+              <Route path="/users" element={<Users />} />
+              <Route path="/payroll" element={<Payroll />} />
+              <Route path="/change-orders" element={<ChangeOrders />} />
+              <Route path="/custody" element={<Custody />} />
+              <Route path="/vouchers" element={<Vouchers />} />
+              <Route path="/assets" element={<Assets />} />
+              <Route path="/documents" element={<Documents />} />
+              <Route path="/diagnostics" element={<Diagnostics />} />
+              <Route path="/settings" element={<Settings />} />
             </Route>
-          </Routes>
-        </HashRouter>
-      </AuthProvider>
-    </ApiKeyProvider>
+          </Route>
+        </Routes>
+      </HashRouter>
+    </AuthProvider>
   );
 };
 

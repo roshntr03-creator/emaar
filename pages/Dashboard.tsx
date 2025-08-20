@@ -4,7 +4,6 @@ import { DollarSign, Briefcase, Users, FileText, ShoppingCart, Book, BrainCircui
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import Card from '../components/ui/Card';
 import StatCard from '../components/ui/StatCard';
-import { useApiKey } from '../contexts/ApiKeyContext';
 import * as localApi from '../api';
 import * as firebaseApi from '../firebase/api';
 import { isFirebaseConfigured } from '../firebase/config';
@@ -16,7 +15,6 @@ const Dashboard: React.FC = () => {
   const [summary, setSummary] = useState('');
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
   const [summaryError, setSummaryError] = useState('');
-  const { apiKey } = useApiKey();
 
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -107,12 +105,6 @@ const Dashboard: React.FC = () => {
       setSummaryError('');
       setSummary('');
 
-      if (!apiKey) {
-          setSummaryError("الرجاء إضافة مفتاح Google AI API الخاص بك في صفحة الإعدادات لتفعيل هذه الميزة.");
-          setIsLoadingSummary(false);
-          return;
-      }
-
       const dataForAI = {
           totalRevenue: dashboardData.totalRevenue,
           activeProjects: dashboardData.activeProjects,
@@ -123,7 +115,7 @@ const Dashboard: React.FC = () => {
       };
 
       try {
-          const ai = new GoogleGenAI({ apiKey });
+          const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
           const prompt = `
           أنت مستشار مالي استراتيجي (CFO) لشركة مقاولات في المملكة العربية السعودية. مهمتك هي تحليل البيانات المالية التالية وكتابة ملخص تنفيذي موجز ومؤثر لمدير الشركة.
 
@@ -248,18 +240,10 @@ const Dashboard: React.FC = () => {
                   <BrainCircuit className="w-12 h-12 text-gray-400 mb-4" />
                   <h4 className="font-semibold text-lg text-gray-700">تحليلات ذكية لأدائك</h4>
                   <p className="text-gray-500 my-2 max-w-md">احصل على ملخص تنفيذي فوري لأهم مؤشرات الأداء، مع توصيات استراتيجية لتحسين أعمالك، مقدمة من Gemini AI.</p>
-                  {apiKey ? (
-                    <button onClick={handleGenerateSummary} className="mt-4 inline-flex items-center px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 shadow-sm transition-all">
-                        <BrainCircuit size={16} className="ml-2" />
-                        توليد الملخص الآن
-                    </button>
-                  ) : (
-                    <div className="mt-4 text-center p-4 bg-yellow-50 text-yellow-800 rounded-md border border-yellow-200">
-                        <KeyRound size={20} className="mx-auto mb-2" />
-                        <p className="font-semibold">مفتاح API غير موجود</p>
-                        <p className="text-xs">الرجاء الذهاب إلى <a href="#/settings" className="underline font-bold">الإعدادات</a> لإضافة مفتاح Google AI API.</p>
-                    </div>
-                  )}
+                  <button onClick={handleGenerateSummary} className="mt-4 inline-flex items-center px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 shadow-sm transition-all">
+                      <BrainCircuit size={16} className="ml-2" />
+                      توليد الملخص الآن
+                  </button>
               </div>
           )}
         </Card>

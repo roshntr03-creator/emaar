@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Building, Settings as SettingsIcon, Banknote, Bell, Shield, KeyRound, Loader2, Database, Download, AlertTriangle, Cloud, UploadCloud } from 'lucide-react';
 import type { User, AllRolesPermissions, SettingsData, PermissionAction, ModulePermissions, FirebaseConfig } from '../types';
-import ApiKeyManager from '../components/settings/ApiKeyManager';
 import * as localApi from '../api';
 import * as firebaseApi from '../firebase/api';
 import { getFirebaseConfig, saveFirebaseConfig, clearFirebaseConfig, isFirebaseConfigured, uploadLocalDataToFirestore } from '../firebase/config';
@@ -15,7 +14,6 @@ const settingsTabs = [
   { id: 'notifications', label: 'الإشعارات', icon: Bell },
   { id: 'roles', label: 'الأدوار والصلاحيات', icon: Shield },
   { id: 'data', label: 'البيانات', icon: Database },
-  { id: 'api_key', label: 'مفتاح API', icon: KeyRound },
 ];
 
 const roleMap: Record<User['role'], string> = {
@@ -528,8 +526,6 @@ const Settings: React.FC = () => {
                  return <RolesPermissionsTab />;
             case 'data':
                 return <DataManagementTab />;
-            case 'api_key':
-                return <ApiKeyManager />;
             default:
                 return <div>الرجاء اختيار قسم.</div>;
         }

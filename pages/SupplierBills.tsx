@@ -7,7 +7,6 @@ import * as localApi from '../api';
 import * as firebaseApi from '../firebase/api';
 import { isFirebaseConfigured } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
-import { useApiKey } from '../contexts/ApiKeyContext';
 
 const getStatusChip = (status: 'paid' | 'unpaid' | 'overdue') => {
   const styles = {
@@ -43,7 +42,6 @@ const SupplierBills: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<'all' | SupplierBill['status']>('all');
   const { hasPermission } = useAuth();
   
-  const { apiKey } = useApiKey();
   const [isAiScanning, setIsAiScanning] = useState(false);
   const [aiError, setAiError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -121,16 +119,11 @@ const SupplierBills: React.FC = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!apiKey) {
-        alert("الرجاء إضافة مفتاح Google AI API في الإعدادات لتفعيل هذه الميزة.");
-        return;
-    }
-
     setIsAiScanning(true);
     setAiError('');
 
     try {
-        const ai = new GoogleGenAI({ apiKey });
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const imagePart = await fileToGenerativePart(file);
         
         const prompt = `أنت نظام OCR محاسبي متخصص في فواتير المقاولات. قم بتحليل صورة الفاتورة التالية واستخرج البيانات الأساسية منها.\n\n- استخرج اسم المورد.\n- استخرج تاريخ إصدار الفاتورة بصيغة YYYY-MM-DD.\n- استخرج المبلغ الإجمالي النهائي للفاتورة كرقم.\n- إذا كان تاريخ الاستحقاق موجودًا، استخرجه بصيغة YYYY-MM-DD.\n- تجاهل أي ضرائب أو خصومات، ركز فقط على المبلغ الإجمالي النهائي.\n\nيجب أن يكون الناتج بصيغة JSON حصراً.`;

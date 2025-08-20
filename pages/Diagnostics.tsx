@@ -4,7 +4,6 @@ import { Server, ShieldCheck, CheckCircle, XCircle, AlertCircle, BrainCircuit, L
 import Card from '../components/ui/Card';
 import Modal from '../components/ui/Modal';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useApiKey } from '../contexts/ApiKeyContext';
 import * as localApi from '../api';
 import * as firebaseApi from '../firebase/api';
 import { isFirebaseConfigured } from '../firebase/config';
@@ -152,7 +151,6 @@ const Diagnostics: React.FC = () => {
     const [checkStatus, setCheckStatus] = useState<'idle' | 'checking' | 'complete'>('idle');
     const [checkResults, setCheckResults] = useState<CheckResult[]>([]);
     const [summary, setSummary] = useState({ pass: 0, fail: 0 });
-    const { apiKey } = useApiKey();
     
     const usingFirebase = isFirebaseConfigured();
     const api = usingFirebase ? firebaseApi : localApi;
@@ -200,14 +198,8 @@ const Diagnostics: React.FC = () => {
         setIsAnalyzing(true);
         setAnalysisResult('');
         
-        if (!apiKey) {
-            setAnalysisResult("عذراً، لا يمكن إجراء التحليل. الرجاء إدخال مفتاح Google AI API في صفحة الإعدادات أولاً.");
-            setIsAnalyzing(false);
-            return;
-        }
-        
         try {
-            const ai = new GoogleGenAI({ apiKey });
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const prompt = `
                 أنت خبير في تشخيص أنظمة المحاسبة لشركات المقاولات. 
                 اشرح المشكلة التالية بأسلوب مبسط لمدير غير تقني.
@@ -261,12 +253,8 @@ const Diagnostics: React.FC = () => {
                             <span className="flex items-center text-sm px-2 py-1 bg-green-100 text-green-800 rounded-md"><CheckCircle size={14} className="ml-1" /> متصل</span>
                         </div>
                          <div className="flex items-center justify-between">
-                            <span className="flex items-center text-gray-700"><KeyRound size={16} className="ml-2 text-yellow-500" /> مفتاح Google AI API</span>
-                            {apiKey ? (
-                                <span className="flex items-center text-sm px-2 py-1 bg-green-100 text-green-800 rounded-md"><CheckCircle size={14} className="ml-1" /> موجود</span>
-                            ) : (
-                                <span className="flex items-center text-sm px-2 py-1 bg-yellow-100 text-yellow-800 rounded-md"><AlertCircle size={14} className="ml-1" /> غير موجود</span>
-                            )}
+                            <span className="flex items-center text-gray-700"><BrainCircuit size={16} className="ml-2 text-indigo-500" /> اتصال Google AI</span>
+                            <span className="flex items-center text-sm px-2 py-1 bg-green-100 text-green-800 rounded-md"><CheckCircle size={14} className="ml-1" /> نشط</span>
                         </div>
                     </div>
                 </Card>

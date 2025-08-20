@@ -8,7 +8,6 @@ import * as localApi from '../api';
 import * as firebaseApi from '../firebase/api';
 import { isFirebaseConfigured } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
-import { useApiKey } from '../contexts/ApiKeyContext';
 
 const getStatusChip = (status: Asset['status']) => {
   const styles = {
@@ -36,7 +35,6 @@ const Assets: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<'all' | Asset['status']>('all');
   const { hasPermission } = useAuth();
   
-  const { apiKey } = useApiKey();
   const [isDepreciationModalOpen, setIsDepreciationModalOpen] = useState(false);
   const [isEstimating, setIsEstimating] = useState(false);
   const [estimationLife, setEstimationLife] = useState(5);
@@ -115,15 +113,11 @@ const Assets: React.FC = () => {
   };
   
   const handleGenerateEstimate = async () => {
-    if (!apiKey) {
-      setEstimationError('الرجاء إضافة مفتاح Google AI API في الإعدادات.');
-      return;
-    }
     setIsEstimating(true);
     setEstimationResult(null);
     setEstimationError('');
     try {
-      const ai = new GoogleGenAI({ apiKey });
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const prompt = `أنت خبير محاسبي. للأصل التالي:
         - اسم الأصل: ${formData.name}
         - تكلفة الشراء: ${formData.purchaseCost} ريال سعودي

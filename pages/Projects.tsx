@@ -8,7 +8,6 @@ import * as localApi from '../api';
 import * as firebaseApi from '../firebase/api';
 import { isFirebaseConfigured } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
-import { useApiKey } from '../contexts/ApiKeyContext';
 
 const getStatusChip = (status: 'active' | 'completed' | 'on_hold') => {
   switch (status) {
@@ -29,7 +28,6 @@ const Projects: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<'all' | Project['status']>('all');
   const { hasPermission } = useAuth();
   
-  const { apiKey } = useApiKey();
   const [isEstimationModalOpen, setIsEstimationModalOpen] = useState(false);
   const [isEstimating, setIsEstimating] = useState(false);
   const [estimationPrompt, setEstimationPrompt] = useState('');
@@ -144,10 +142,6 @@ const Projects: React.FC = () => {
       setEstimationError('الرجاء إدخال وصف للمشروع.');
       return;
     }
-    if (!apiKey) {
-      setEstimationError('الرجاء إضافة مفتاح Google AI API في الإعدادات لتفعيل هذه الميزة.');
-      return;
-    }
 
     setIsEstimating(true);
     setEstimationResult(null);
@@ -165,7 +159,7 @@ const Projects: React.FC = () => {
         durationInDays: Math.round((new Date(p.endDate).getTime() - new Date(p.startDate).getTime()) / (1000 * 60 * 60 * 24)),
       }));
 
-      const ai = new GoogleGenAI({ apiKey });
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const prompt = `
         أنت خبير تقدير تكاليف في قطاع المقاولات بالمملكة العربية السعودية. مهمتك هي تحليل وصف المشروع التالي وتقديم تقدير تكلفة مفصل ومبني على البيانات التاريخية للمشاريع السابقة.
 

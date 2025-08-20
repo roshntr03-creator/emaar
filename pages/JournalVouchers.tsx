@@ -6,7 +6,6 @@ import Modal from '../components/ui/Modal';
 import * as localApi from '../api';
 import * as firebaseApi from '../firebase/api';
 import { isFirebaseConfigured } from '../firebase/config';
-import { useApiKey } from '../contexts/ApiKeyContext';
 import { useAuth } from '../contexts/AuthContext';
 
 const getStatusChip = (status: 'posted' | 'draft') => {
@@ -29,7 +28,6 @@ const JournalVouchers: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<'all' | JournalVoucher['status']>('all');
   const { hasPermission } = useAuth();
   
-  const { apiKey } = useApiKey();
   const [aiPrompt, setAiPrompt] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiError, setAiError] = useState('');
@@ -161,10 +159,6 @@ const JournalVouchers: React.FC = () => {
         setAiError('الرجاء إدخال وصف للعملية المالية.');
         return;
     }
-    if (!apiKey) {
-        setAiError('الرجاء إضافة مفتاح Google AI API في الإعدادات لتفعيل هذه الميزة.');
-        return;
-    }
 
     setIsAiLoading(true);
     setAiError('');
@@ -172,7 +166,7 @@ const JournalVouchers: React.FC = () => {
     const chartOfAccountsForAI = accounts.map(({ id, code, name, type }) => ({ id, code, name, type }));
 
     try {
-        const ai = new GoogleGenAI({ apiKey });
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const prompt = `
             أنت خبير محاسبة في شركة مقاولات سعودية. مهمتك هي تحليل الوصف التالي للعملية المالية وإنشاء قيد يومية متوازن.
             
