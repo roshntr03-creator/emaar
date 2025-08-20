@@ -1,3 +1,5 @@
+
+
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import firebase from 'firebase/compat/app';
@@ -5,7 +7,7 @@ import 'firebase/compat/auth';
 import type { User, RolePermissions, AllRolesPermissions, PermissionAction } from '../types';
 import * as localApi from '../api';
 import * as firebaseApi from '../firebase/api';
-import { isFirebaseConfigured, initializeFirebase } from '../firebase/config';
+import { isFirebaseConfigured, initializeFirebase, uploadLocalDataToFirestore } from '../firebase/config';
 
 interface AuthContextType {
   user: User | null;
@@ -64,16 +66,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     let appUser = users.find(u => u.email === firebaseUser.email);
                     
                     if (!appUser) {
-                        // JIT Provisioning: Create user on session restore if they don't exist
+                        const isFirstUser = users.length === 0;
                         console.log(`User ${firebaseUser.email} session restored but not in DB. Provisioning...`);
                         const newUser: Omit<User, 'id' | 'password'> = {
                             name: firebaseUser.displayName || firebaseUser.email,
                             email: firebaseUser.email,
-                            role: 'viewer', // Assign the least privileged role by default
+                            role: isFirstUser ? 'admin' : 'viewer',
                             status: 'active',
                             avatarUrl: firebaseUser.photoURL || `https://i.pravatar.cc/150?u=${firebaseUser.uid}`
                         };
                         appUser = await api.addUser(newUser);
+                        
+                        if (appUser && isFirstUser) {
+                            console.log("First user on session restore. Seeding database...");
+                            await uploadLocalDataToFirestore((message) => console.log(`Seeding progress: ${message}`));
+                        }
                     }
 
                     if (appUser && appUser.status === 'active') {
@@ -121,7 +128,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 let appUser = users.find(u => u.email === firebaseUser.email);
 
                 if (appUser) {
-                    // User exists, proceed as normal
                     if (appUser.status === 'inactive') {
                         await auth.signOut();
                         return { success: false, message: 'هذا الحساب غير نشط. يرجى مراجعة المسؤول.' };
@@ -129,14 +135,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     await loadPermissionsAndSetUser(appUser);
                     return { success: true, message: "تم تسجيل الدخول بنجاح." };
                 } else {
-                    // JIT Provisioning: User authenticated with Firebase but is not in our app's user database.
-                    // Automatically create a new user profile for them.
+                    const isFirstUser = users.length === 0;
                     console.log(`User ${firebaseUser.email} authenticated but not in DB. Provisioning...`);
                     
                     const newUser: Omit<User, 'id' | 'password'> = {
                         name: firebaseUser.displayName || firebaseUser.email,
                         email: firebaseUser.email,
-                        role: 'viewer', // Assign the least privileged role by default
+                        role: isFirstUser ? 'admin' : 'viewer',
                         status: 'active',
                         avatarUrl: firebaseUser.photoURL || `https://i.pravatar.cc/150?u=${firebaseUser.uid}`
                     };
@@ -144,17 +149,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     const createdUser = await api.addUser(newUser);
                     
                     if (createdUser) {
-                        // User successfully created, now load their permissions and log them in.
+                        if (isFirstUser) {
+                            console.log("First user detected. Seeding database with initial data...");
+                            await uploadLocalDataToFirestore((message) => console.log(`Seeding progress: ${message}`));
+                        }
                         await loadPermissionsAndSetUser(createdUser);
-                        return { success: true, message: 'مرحباً بك! تم إنشاء حسابك تلقائياً بصلاحيات مشاهدة.' };
+                         const message = isFirstUser 
+                            ? 'مرحباً بك! تم إنشاء حساب المدير الخاص بك وتعبئة النظام ببيانات تجريبية.'
+                            : 'مرحباً بك! تم إنشاء حسابك تلقائياً بصلاحيات مشاهدة.';
+                        return { success: true, message };
                     } else {
-                        // Something went wrong creating the user profile, so sign them out.
                         await auth.signOut();
                         return { success: false, message: 'فشل إنشاء ملف تعريف المستخدم الخاص بك. يرجى المحاولة مرة أخرى أو الاتصال بالمسؤول.' };
                     }
                 }
             }
-             // Fallback, should not be reached if signInWithEmailAndPassword is successful
             return { success: false, message: "حدث خطأ غير متوقع أثناء استرداد بيانات المستخدم." };
 
         } catch (error) {
