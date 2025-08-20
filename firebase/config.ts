@@ -80,17 +80,22 @@ export const uploadLocalDataToFirestore = async (
                 progressCallback(`Uploading ${collectionName}...`);
                 
                 const items = localData[collectionName] as any[];
-                if (items.length === 0) continue;
-
                 const collectionRef = collection(firebase.db, collectionName);
-                
-                items.forEach(item => {
-                    const docId = item.id || item.code; // Use 'id' or 'code' for accounts
-                    if(docId) {
-                       const docRef = doc(collectionRef, String(docId));
-                       batch.set(docRef, item);
-                    }
-                });
+
+                if (items.length > 0) {
+                    items.forEach(item => {
+                        const docId = item.id || item.code; // Use 'id' or 'code' for accounts
+                        if(docId) {
+                           const docRef = doc(collectionRef, String(docId));
+                           batch.set(docRef, item);
+                        }
+                    });
+                } else {
+                    // Add a placeholder document to ensure the collection is created and visible in the Firebase UI
+                    const placeholderRef = doc(collectionRef, '_placeholder_');
+                    batch.set(placeholderRef, { initializedAt: new Date().toISOString(), description: "This document ensures the collection is visible." });
+                }
+
             } else if (typeof localData[collectionName] === 'object' && localData[collectionName] !== null) {
                  progressCallback(`Uploading ${collectionName}...`);
                  const docRef = doc(firebase.db, 'app_settings', collectionName);
