@@ -101,12 +101,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return { success: true, message: "تم تسجيل الدخول بنجاح." };
         } catch (error) {
             console.error("Firebase login error:", error);
+            if (error && typeof error === 'object' && 'code' in error && 'message' in error) {
+                const firebaseError = error as { code: string, message: string };
+                console.log(`Firebase Auth Error Detected. Code: [${firebaseError.code}]. Message: [${firebaseError.message}]`);
+            }
+
             let message = "حدث خطأ غير متوقع أثناء تسجيل الدخول.";
 
             if (error && typeof error === 'object' && 'code' in error) {
                 switch ((error as { code: string }).code) {
                     case 'auth/invalid-credential':
-                        message = "فشل تسجيل الدخول. يرجى التحقق من البريد الإلكتروني وكلمة المرور. إذا كنت متأكداً من صحتهما، تأكد من أنك قمت بإعداد معلومات اتصال Firebase بشكل صحيح في صفحة 'الإعدادات' وأن المستخدم موجود ومفعّل في مشروع Firebase الخاص بك.";
+                        message = "فشل تسجيل الدخول: بيانات الاعتماد غير صالحة. الرجاء التحقق من البريد الإلكتروني وكلمة المرور. قد يكون السبب أيضاً خطأ في إعدادات Firebase API Key في صفحة الإعدادات أو أن موفر تسجيل الدخول بالبريد الإلكتروني غير مفعّل في مشروع Firebase الخاص بك.";
                         break;
                     case 'auth/user-disabled':
                         message = "تم تعطيل هذا الحساب. يرجى التواصل مع المسؤول.";
