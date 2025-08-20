@@ -1,5 +1,6 @@
-import { collection, query, where, getDocs, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, runTransaction, writeBatch, Query, DocumentData, limit } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/firestore';
+import 'firebase/compat/storage';
 import { initializeFirebase } from './config';
 
 import type { 
@@ -9,14 +10,18 @@ import type {
     ProjectFinancialTransaction, FinancialOverviewData, Asset, Document
 } from '../types';
 
+// --- Type Aliases for Compat ---
+type Query = firebase.firestore.Query;
+type DocumentData = firebase.firestore.DocumentData;
+
 // --- Generic Helpers ---
 
-async function getCollectionData<T extends { id?: string }>(collectionName: string, q?: Query<DocumentData>): Promise<T[]> {
+async function getCollectionData<T extends { id?: string }>(collectionName: string, q?: Query): Promise<T[]> {
     const firebaseServices = initializeFirebase();
     if (!firebaseServices) return [];
     try {
-        const queryToExecute = q || collection(firebaseServices.db, collectionName);
-        const querySnapshot = await getDocs(queryToExecute);
+        const queryToExecute = q || firebaseServices.db.collection(collectionName);
+        const querySnapshot = await queryToExecute.get();
         return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as T));
     } catch (error) {
         console.error(`Error fetching ${collectionName}:`, error);
@@ -29,9 +34,9 @@ async function getDocumentData<T extends { id?: string }>(collectionName: string
     const firebaseServices = initializeFirebase();
     if (!firebaseServices) return undefined;
     try {
-        const docRef = doc(firebaseServices.db, collectionName, id);
-        const docSnap = await getDoc(docRef);
-        return docSnap.exists() ? ({ ...docSnap.data(), id: docSnap.id } as T) : undefined;
+        const docRef = firebaseServices.db.collection(collectionName).doc(id);
+        const docSnap = await docRef.get();
+        return docSnap.exists ? ({ ...docSnap.data(), id: docSnap.id } as T) : undefined;
     } catch (error) {
         console.error(`Error fetching document ${id} from ${collectionName}:`, error);
         return undefined;
@@ -41,12 +46,12 @@ async function getDocumentData<T extends { id?: string }>(collectionName: string
 async function addDocumentData<T extends { id: string }>(collectionName: string, data: Omit<T, 'id'>, customId?: string): Promise<T> {
     const firebaseServices = initializeFirebase();
     if (!firebaseServices) throw new Error("Firebase not initialized");
+    const collectionRef = firebaseServices.db.collection(collectionName);
     if (customId) {
-        const docRef = doc(firebaseServices.db, collectionName, customId);
-        await setDoc(docRef, data);
+        await collectionRef.doc(customId).set(data);
         return { ...data, id: customId } as T;
     } else {
-        const docRef = await addDoc(collection(firebaseServices.db, collectionName), data);
+        const docRef = await collectionRef.add(data);
         return { ...data, id: docRef.id } as T;
     }
 }
@@ -54,17 +59,17 @@ async function addDocumentData<T extends { id: string }>(collectionName: string,
 async function updateDocumentData<T extends { id: string }>(collectionName: string, data: T): Promise<T> {
     const firebaseServices = initializeFirebase();
     if (!firebaseServices) throw new Error("Firebase not initialized");
-    const docRef = doc(firebaseServices.db, collectionName, data.id);
+    const docRef = firebaseServices.db.collection(collectionName).doc(data.id);
     const dataToUpdate = { ...data };
     delete (dataToUpdate as any).id; // Do not save the id field inside the document
-    await updateDoc(docRef, dataToUpdate);
+    await docRef.update(dataToUpdate);
     return data;
 }
 
 async function deleteDocumentData(collectionName: string, id: string): Promise<void> {
     const firebaseServices = initializeFirebase();
     if (!firebaseServices) throw new Error("Firebase not initialized");
-    await deleteDoc(doc(firebaseServices.db, collectionName, id));
+    await firebaseServices.db.collection(collectionName).doc(id).delete();
 }
 
 // --- Projects ---
@@ -149,9 +154,9 @@ export const deleteAccount = async (id: string): Promise<void> => {
     }
     const firebaseServices = initializeFirebase();
     if (!firebaseServices) throw new Error("Firebase not initialized");
-    const batch = writeBatch(firebaseServices.db);
+    const batch = firebaseServices.db.batch();
     idsToDelete.forEach(accId => {
-        batch.delete(doc(firebaseServices.db, "accounts", accId));
+        batch.delete(firebaseServices.db.collection("accounts").doc(accId));
     });
     await batch.commit();
 };
@@ -174,13 +179,13 @@ export const completePurchaseOrder = async (poId: string): Promise<PurchaseOrder
     const db = firebaseServices.db;
     
     // Fetch accounts needed for the transaction beforehand
-    const invAccQuery = query(collection(db, 'accounts'), where("code", "==", "112"), limit(1));
-    const payAccQuery = query(collection(db, 'accounts'), where("code", "==", "211"), limit(1));
+    const invAccQuery = db.collection('accounts').where("code", "==", "112").limit(1);
+    const payAccQuery = db.collection('accounts').where("code", "==", "211").limit(1);
 
     try {
         const [invAccSnap, payAccSnap] = await Promise.all([
-            getDocs(invAccQuery),
-            getDocs(payAccQuery)
+            invAccQuery.get(),
+            payAccQuery.get()
         ]);
 
         if (invAccSnap.empty || payAccSnap.empty) {
@@ -190,10 +195,10 @@ export const completePurchaseOrder = async (poId: string): Promise<PurchaseOrder
         const inventoryAccount = { id: invAccSnap.docs[0].id, ...invAccSnap.docs[0].data() } as Account;
         const payableAccount = { id: payAccSnap.docs[0].id, ...payAccSnap.docs[0].data() } as Account;
 
-        return await runTransaction(db, async (transaction) => {
-            const poRef = doc(db, 'purchaseOrders', poId);
+        return await db.runTransaction(async (transaction) => {
+            const poRef = db.collection('purchaseOrders').doc(poId);
             const poDoc = await transaction.get(poRef);
-            if (!poDoc.exists()) throw new Error("Purchase order not found");
+            if (!poDoc.exists) throw new Error("Purchase order not found");
             
             const po = { ...poDoc.data(), id: poDoc.id } as PurchaseOrder;
             if (po.status !== 'approved') throw new Error("Can only complete 'approved' orders.");
@@ -208,14 +213,12 @@ export const completePurchaseOrder = async (poId: string): Promise<PurchaseOrder
                     { accountId: payableAccount.id, description: `استحقاق للمورد ${po.supplierName}`, debit: 0, credit: totalAmount },
                 ]
             };
-            const jvRef = doc(collection(db, 'journalVouchers'));
+            const jvRef = db.collection('journalVouchers').doc();
             transaction.set(jvRef, jvData);
 
             for (const line of po.lines) {
-                // This query inside a transaction is not ideal for performance but will work.
-                // In a high-throughput system, this might be redesigned.
-                const itemQuery = query(collection(db, 'inventory'), where("name", "==", line.description.trim()), limit(1));
-                const itemSnap = await getDocs(itemQuery);
+                const itemQuery = db.collection('inventory').where("name", "==", line.description.trim()).limit(1);
+                const itemSnap = await transaction.get(itemQuery);
                 
                 if (!itemSnap.empty) {
                     const itemDoc = itemSnap.docs[0];
@@ -228,7 +231,7 @@ export const completePurchaseOrder = async (poId: string): Promise<PurchaseOrder
                     transaction.update(itemDoc.ref, { quantity: newTotalQuantity, averageCost: newAverageCost });
                 } else {
                     const newItemData: Omit<InventoryItem, 'id'> = { name: line.description, category: 'مواد عامة', quantity: line.quantity, unit: 'وحدة', averageCost: line.unitPrice };
-                    const newItemRef = doc(collection(db, 'inventory'));
+                    const newItemRef = db.collection('inventory').doc(); // Auto-generate ID
                     transaction.set(newItemRef, newItemData);
                 }
             }
@@ -290,7 +293,7 @@ export const deleteCustody = (id: string): Promise<void> => deleteDocumentData('
 export const getBudgetLinesForProject = async (projectId: string): Promise<BudgetLine[]> => {
     const firebaseServices = initializeFirebase();
     if (!firebaseServices) return [];
-    const q = query(collection(firebaseServices.db, 'budgetLines'), where("projectId", "==", projectId));
+    const q = firebaseServices.db.collection('budgetLines').where("projectId", "==", projectId);
     return getCollectionData('budgetLines', q);
 };
 export const addBudgetLine = (data: Omit<BudgetLine, 'id'>): Promise<BudgetLine> => addDocumentData('budgetLines', data);
@@ -307,7 +310,7 @@ export const deleteSupplierBill = (id: string): Promise<void> => deleteDocumentD
 export const getTasksForProject = async (projectId: string): Promise<ProjectTask[]> => {
     const firebaseServices = initializeFirebase();
     if (!firebaseServices) return [];
-    const q = query(collection(firebaseServices.db, 'tasks'), where("projectId", "==", projectId));
+    const q = firebaseServices.db.collection('tasks').where("projectId", "==", projectId);
     return getCollectionData('tasks', q);
 };
 export const addTask = (data: Omit<ProjectTask, 'id'>): Promise<ProjectTask> => addDocumentData('tasks', data);
@@ -326,7 +329,7 @@ export const getAllSubcontractorPayments = (): Promise<SubcontractorPayment[]> =
 export const getSubcontractorPayments = async (subcontractId: string): Promise<SubcontractorPayment[]> => {
     const firebaseServices = initializeFirebase();
     if (!firebaseServices) return [];
-    const q = query(collection(firebaseServices.db, 'subcontractorPayments'), where("subcontractId", "==", subcontractId));
+    const q = firebaseServices.db.collection('subcontractorPayments').where("subcontractId", "==", subcontractId);
     return getCollectionData('subcontractorPayments', q);
 };
 export const addSubcontractorPayment = (data: Omit<SubcontractorPayment, 'id'>): Promise<SubcontractorPayment> => addDocumentData('subcontractorPayments', data);
@@ -337,7 +340,7 @@ export const deleteSubcontractorPayment = (id: string): Promise<void> => deleteD
 export const getAttachments = async (relatedId: string, relatedType: string): Promise<Attachment[]> => {
     const firebaseServices = initializeFirebase();
     if (!firebaseServices) return [];
-    const q = query(collection(firebaseServices.db, 'attachments'), where("relatedId", "==", relatedId), where("relatedType", "==", relatedType));
+    const q = firebaseServices.db.collection('attachments').where("relatedId", "==", relatedId).where("relatedType", "==", relatedType);
     return getCollectionData('attachments', q);
 };
 
@@ -346,10 +349,10 @@ export const addAttachment = async (file: File, relatedId: string, relatedType: 
     if (!firebaseServices) throw new Error("Firebase not initialized");
     
     const storagePath = `attachments/${relatedType}/${relatedId}/${Date.now()}_${file.name}`;
-    const storageRef = ref(firebaseServices.storage, storagePath);
+    const storageRef = firebaseServices.storage.ref(storagePath);
 
-    const snapshot = await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(snapshot.ref);
+    const snapshot = await storageRef.put(file);
+    const downloadURL = await snapshot.ref.getDownloadURL();
 
     const attachmentData: Omit<Attachment, 'id'> = {
         fileName: file.name,
@@ -371,8 +374,8 @@ export const deleteAttachment = async (id: string): Promise<void> => {
 
     const attachmentDoc = await getDocumentData<Attachment>('attachments', id);
     if (attachmentDoc && attachmentDoc.storagePath) {
-        const storageRef = ref(firebaseServices.storage, attachmentDoc.storagePath);
-        await deleteObject(storageRef);
+        const storageRef = firebaseServices.storage.ref(attachmentDoc.storagePath);
+        await storageRef.delete();
     }
     await deleteDocumentData('attachments', id);
 };
@@ -391,10 +394,10 @@ export const addDocument = async (file: File, data: Omit<Document, 'id' | 'fileN
     if (!firebaseServices) throw new Error("Firebase not initialized");
     
     const storagePath = `documents/${Date.now()}_${file.name}`;
-    const storageRef = ref(firebaseServices.storage, storagePath);
+    const storageRef = firebaseServices.storage.ref(storagePath);
     
-    const snapshot = await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(snapshot.ref);
+    const snapshot = await storageRef.put(file);
+    const downloadURL = await snapshot.ref.getDownloadURL();
 
     const documentData: Omit<Document, 'id'> = {
         ...data,
@@ -417,8 +420,8 @@ export const deleteDocument = async (id: string): Promise<void> => {
     
     const docToDelete = await getDocumentData<Document>('documents', id);
     if (docToDelete && docToDelete.storagePath) {
-        const storageRef = ref(firebaseServices.storage, docToDelete.storagePath);
-        await deleteObject(storageRef).catch(error => console.error("Error deleting file from storage:", error));
+        const storageRef = firebaseServices.storage.ref(docToDelete.storagePath);
+        await storageRef.delete().catch(error => console.error("Error deleting file from storage:", error));
     }
     await deleteDocumentData('documents', id);
 };
@@ -429,9 +432,9 @@ export const getSettings = async (): Promise<SettingsData> => {
     const firebaseServices = initializeFirebase();
     if (!firebaseServices) return {} as SettingsData;
     try {
-        const docRef = doc(firebaseServices.db, 'app_settings', 'settings');
-        const docSnap = await getDoc(docRef);
-        return docSnap.exists() ? docSnap.data() as SettingsData : {} as SettingsData;
+        const docRef = firebaseServices.db.collection('app_settings').doc('settings');
+        const docSnap = await docRef.get();
+        return docSnap.exists ? docSnap.data() as SettingsData : {} as SettingsData;
     } catch (error) {
         console.error(`Error fetching settings:`, error);
         return {} as SettingsData;
@@ -440,7 +443,7 @@ export const getSettings = async (): Promise<SettingsData> => {
 export const updateSettings = async (data: SettingsData): Promise<SettingsData> => {
     const firebaseServices = initializeFirebase();
     if (!firebaseServices) throw new Error("Firebase not initialized");
-    await setDoc(doc(firebaseServices.db, 'app_settings', 'settings'), data);
+    await firebaseServices.db.collection('app_settings').doc('settings').set(data);
     return data;
 };
 
@@ -448,9 +451,9 @@ export const getPermissions = async (): Promise<AllRolesPermissions> => {
      const firebaseServices = initializeFirebase();
     if (!firebaseServices) return {} as AllRolesPermissions;
     try {
-        const docRef = doc(firebaseServices.db, 'app_settings', 'permissions');
-        const docSnap = await getDoc(docRef);
-        return docSnap.exists() ? docSnap.data() as AllRolesPermissions : {} as AllRolesPermissions;
+        const docRef = firebaseServices.db.collection('app_settings').doc('permissions');
+        const docSnap = await docRef.get();
+        return docSnap.exists ? docSnap.data() as AllRolesPermissions : {} as AllRolesPermissions;
     } catch (error) {
         console.error(`Error fetching permissions:`, error);
         return {} as AllRolesPermissions;
@@ -459,7 +462,7 @@ export const getPermissions = async (): Promise<AllRolesPermissions> => {
 export const updatePermissions = async (data: AllRolesPermissions): Promise<AllRolesPermissions> => {
     const firebaseServices = initializeFirebase();
     if (!firebaseServices) throw new Error("Firebase not initialized");
-    await setDoc(doc(firebaseServices.db, 'app_settings', 'permissions'), data);
+    await firebaseServices.db.collection('app_settings').doc('permissions').set(data);
     return data;
 };
 

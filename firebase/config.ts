@@ -1,9 +1,15 @@
-import { initializeApp, getApps, getApp, type FirebaseApp } from '@firebase/app';
-import { getAuth, Auth } from 'firebase/auth';
-import { getFirestore, Firestore, writeBatch, doc } from 'firebase/firestore';
-import { getStorage, FirebaseStorage } from 'firebase/storage';
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
+import 'firebase/compat/firestore';
+import 'firebase/compat/storage';
 import type { FirebaseConfig } from '../types';
 import { db } from '../database';
+
+// Re-typing for compat layer
+type FirebaseApp = firebase.app.App;
+type Auth = firebase.auth.Auth;
+type Firestore = firebase.firestore.Firestore;
+type FirebaseStorage = firebase.storage.Storage;
 
 const FIREBASE_CONFIG_KEY = 'firebase_config';
 
@@ -43,14 +49,14 @@ export const initializeFirebase = (): { app: FirebaseApp, auth: Auth, db: Firest
     const config = getFirebaseConfig();
     if (config) {
         try {
-            if (!getApps().length) {
-                firebaseApp = initializeApp(config);
+            if (!firebase.apps.length) {
+                firebaseApp = firebase.initializeApp(config);
             } else {
-                firebaseApp = getApp();
+                firebaseApp = firebase.app();
             }
-            auth = getAuth(firebaseApp);
-            firestore = getFirestore(firebaseApp);
-            storage = getStorage(firebaseApp);
+            auth = firebase.auth();
+            firestore = firebase.firestore();
+            storage = firebase.storage();
             return { app: firebaseApp, auth, db: firestore, storage: storage };
         } catch (error) {
             console.error("Firebase initialization failed:", error);
@@ -73,7 +79,7 @@ export const uploadLocalDataToFirestore = async (
     const firestoreDb = firebaseServices.db;
 
     try {
-        const batch = writeBatch(firestoreDb);
+        const batch = firestoreDb.batch();
         const localData = JSON.parse(db.exportAllData());
         
         for (const collectionName in localData) {
@@ -89,19 +95,19 @@ export const uploadLocalDataToFirestore = async (
                     items.forEach(item => {
                         const docId = item.id || item.code; // Use 'id' or 'code' for accounts
                         if(docId) {
-                           const docRef = doc(firestoreDb, collectionName, String(docId));
+                           const docRef = firestoreDb.collection(collectionName).doc(String(docId));
                            batch.set(docRef, item);
                         }
                     });
                 } else {
                     // Add a placeholder document to ensure the collection is created and visible in the Firebase UI
-                    const placeholderRef = doc(firestoreDb, collectionName, '_placeholder_');
+                    const placeholderRef = firestoreDb.collection(collectionName).doc('_placeholder_');
                     batch.set(placeholderRef, { initializedAt: new Date().toISOString(), description: "This document ensures the collection is visible." });
                 }
 
             } else if (typeof localData[collectionName] === 'object' && localData[collectionName] !== null) {
                  progressCallback(`Uploading ${collectionName}...`);
-                 const docRef = doc(firestoreDb, 'app_settings', collectionName);
+                 const docRef = firestoreDb.collection('app_settings').doc(collectionName);
                  batch.set(docRef, localData[collectionName]);
             }
         }

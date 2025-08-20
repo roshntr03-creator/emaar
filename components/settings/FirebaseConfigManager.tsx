@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { Cloud, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
-import { initializeApp } from '@firebase/app';
+import firebase from 'firebase/compat/app';
 import { getFirebaseConfig, saveFirebaseConfig, clearFirebaseConfig } from '../../firebase/config';
 import type { FirebaseConfig } from '../../types';
 
@@ -48,7 +47,7 @@ const FirebaseConfigManager: React.FC<FirebaseConfigManagerProps> = ({ onConfigS
         try {
             // Attempt to initialize a temporary app to validate config
             // Using a unique name avoids conflicts with the main app instance
-            initializeApp(configInputs, `config_test_${Date.now()}`);
+            firebase.initializeApp(configInputs, `config_test_${Date.now()}`);
             setTestStatus('success');
             setTestMessage('تم الاتصال بنجاح!');
         } catch (error) {

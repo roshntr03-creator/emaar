@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
-import { signOut, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
 import type { User, RolePermissions, AllRolesPermissions, PermissionAction } from '../types';
 import * as localApi from '../api';
 import * as firebaseApi from '../firebase/api';
@@ -42,7 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (usingFirebase) {
         const firebaseServices = initializeFirebase();
         if (firebaseServices) {
-            signOut(firebaseServices.auth);
+            firebaseServices.auth.signOut();
         }
     }
     // Clear local state regardless
@@ -57,7 +58,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const firebaseServices = initializeFirebase();
         if (firebaseServices) {
             const auth = firebaseServices.auth;
-            const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+            const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                 if (firebaseUser && firebaseUser.email) {
                     const users = await api.getUsers();
                     const appUser = users.find(u => u.email === firebaseUser.email);
@@ -97,7 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!firebaseServices) return { success: false, message: "لم يتم تكوين Firebase بشكل صحيح. يرجى الذهاب إلى الإعدادات." };
         const { auth } = firebaseServices;
         try {
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const userCredential = await auth.signInWithEmailAndPassword(email, password);
             const firebaseUser = userCredential.user;
 
             if (firebaseUser && firebaseUser.email) {
@@ -108,7 +109,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 if (appUser) {
                     // Check if user is active
                     if (appUser.status === 'inactive') {
-                        await signOut(auth);
+                        await auth.signOut();
                         return { success: false, message: 'هذا الحساب غير نشط. يرجى مراجعة المسؤول.' };
                     }
                     // User exists and is active, load permissions and set state.
@@ -116,7 +117,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     return { success: true, message: "تم تسجيل الدخول بنجاح." };
                 } else {
                     // User authenticated with Firebase but is not in our app's user database.
-                    await signOut(auth); // Sign out immediately to prevent inconsistent state
+                    await auth.signOut(); // Sign out immediately to prevent inconsistent state
                     return { success: false, message: `تم التحقق من المستخدم بنجاح، ولكن لا يوجد له حساب مسجل في التطبيق. يرجى التواصل مع المسؤول لإضافتك.` };
                 }
             }
