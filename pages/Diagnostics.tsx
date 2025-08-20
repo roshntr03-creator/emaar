@@ -52,7 +52,7 @@ const getChecksToRun = async (api: typeof localApi | typeof firebaseApi): Promis
             category: 'سلامة مالية',
             check: async () => {
                 const unbalanced = journalVouchers.filter(jv => {
-                    const totals = jv.lines.reduce((acc, line) => {
+                    const totals = (jv.lines || []).reduce((acc, line) => {
                         acc.debit += line.debit;
                         acc.credit += line.credit;
                         return acc;

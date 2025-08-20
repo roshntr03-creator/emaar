@@ -23,7 +23,7 @@ const getStatusChip = (status: PayrollRun['status']) => {
 };
 
 const calculateTotals = (slips: PayrollSlip[]) => {
-    return slips.reduce((acc, slip) => {
+    return (slips || []).reduce((acc, slip) => {
         const grossPay = slip.basicSalary + slip.allowances;
         acc.totalGross += grossPay;
         acc.totalDeductions += slip.deductions;
@@ -281,7 +281,7 @@ const Payroll: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {formData.slips.map((slip, index) => (
+                  {(formData.slips || []).map((slip, index) => (
                     <tr key={slip.employeeId} className="border-b">
                       <td className="p-2">{slip.employeeName}</td>
                       <td className="p-2">﷼{slip.basicSalary.toLocaleString()}</td>
