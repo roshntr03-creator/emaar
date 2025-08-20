@@ -188,6 +188,14 @@ class Database {
     }
   }
 
+  public clearDatabase() {
+    try {
+      localStorage.removeItem(this.storageKey);
+    } catch (error) {
+      console.error("Error clearing database from localStorage:", error);
+    }
+  }
+
   private _generateId(basePrefix: string, list: { id: string }[], options: { useYear?: boolean } = {}): string {
     const year = new Date().getFullYear();
     const prefix = options.useYear ? `${basePrefix}-${year}-` : `${basePrefix}-`;

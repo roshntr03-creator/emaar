@@ -168,3 +168,4 @@ export const getFinancialOverviewData = async (): Promise<FinancialOverviewData>
 // --- Data Management ---
 export const exportAllData = (): string => db.exportAllData();
 export const importData = (jsonString: string): { success: boolean, message: string } => db.importData(jsonString);
+export const clearLocalDatabase = (): void => db.clearDatabase();

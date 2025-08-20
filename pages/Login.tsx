@@ -1,18 +1,21 @@
 
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building, Mail, Lock, AlertTriangle, Settings } from 'lucide-react';
+import { Building, Mail, Lock, AlertTriangle, Settings, RefreshCw } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import Modal from '../components/ui/Modal';
 import FirebaseConfigManager from '../components/settings/FirebaseConfigManager';
-import { isFirebaseConfigured } from '../firebase/config';
+import { isFirebaseConfigured, uploadLocalDataToFirestore } from '../firebase/config';
+import * as localApi from '../api';
+import * as firebaseApi from '../firebase/api';
+
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
@@ -22,6 +25,7 @@ const Login: React.FC = () => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
+    setLoadingMessage('جاري التحقق...');
     try {
       const result = await login(email, password);
       if (result.success) {
@@ -33,6 +37,7 @@ const Login: React.FC = () => {
       setError('حدث خطأ ما. يرجى المحاولة مرة أخرى.');
     } finally {
       setIsLoading(false);
+      setLoadingMessage('');
     }
   };
   
@@ -40,6 +45,35 @@ const Login: React.FC = () => {
       setIsConfigModalOpen(false);
   };
 
+  const handleCreateNewCompany = async () => {
+    if (!window.confirm("تحذير: سيؤدي هذا إلى مسح جميع البيانات الحالية (سواء كانت محلية أو سحابية) والبدء من جديد ببيانات تجريبية. هل أنت متأكد؟")) {
+      return;
+    }
+    setIsLoading(true);
+    setError('');
+    
+    try {
+      if (usingFirebase) {
+        setLoadingMessage('جاري مسح البيانات السحابية الحالية...');
+        await firebaseApi.clearAllFirestoreData();
+        setLoadingMessage('جاري تعبئة النظام بالبيانات التجريبية...');
+        await uploadLocalDataToFirestore(message => setLoadingMessage(`جاري التعبئة: ${message}`));
+      } else {
+        setLoadingMessage('جاري إعادة تعيين البيانات المحلية...');
+        localApi.clearLocalDatabase();
+      }
+      alert("تم إنشاء حساب الشركة الجديد بنجاح! سيتم إعادة تحميل الصفحة الآن.");
+      window.location.reload();
+    } catch (err) {
+      const errorMessage = "فشل في إعادة تعيين البيانات. يرجى التحقق من صلاحيات قاعدة البيانات في Firebase والمحاولة مرة أخرى.";
+      setError(errorMessage);
+      console.error(err);
+      alert(errorMessage);
+    } finally {
+      setIsLoading(false);
+      setLoadingMessage('');
+    }
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 font-sans">
@@ -116,10 +150,21 @@ const Login: React.FC = () => {
                 disabled={isLoading}
                 className="w-full flex justify-center px-4 py-3 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-400 transition-all duration-200"
               >
-                {isLoading ? 'جاري التحقق...' : 'تسجيل الدخول'}
+                {isLoading ? loadingMessage : 'تسجيل الدخول'}
               </button>
             </div>
           </form>
+          
+           <div className="mt-6 border-t pt-6">
+                <button
+                    onClick={handleCreateNewCompany}
+                    disabled={isLoading}
+                    className="w-full flex justify-center items-center px-4 py-3 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 disabled:bg-gray-200 transition-all duration-200"
+                >
+                    <RefreshCw size={16} className="ml-2"/>
+                    {isLoading ? loadingMessage : 'إنشاء حساب شركة جديد (إعادة تعيين البيانات)'}
+                </button>
+            </div>
 
            <div className="mt-6 text-xs text-center text-gray-500 bg-gray-50 p-3 rounded-md border">
             <p className="font-bold mb-2">لأغراض العرض التوضيحي:</p>

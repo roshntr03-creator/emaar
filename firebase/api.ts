@@ -501,3 +501,47 @@ export const getFinancialOverviewData = async (): Promise<FinancialOverviewData>
       payrollRuns: payrollRuns.map(({ period, payDate, status, slips }) => ({ period, payDate, status, totalPaid: slips.reduce((sum, s) => sum + s.netPay, 0) })),
     };
 };
+
+// --- Data Management ---
+const COLLECTIONS = [
+  'projects', 'clients', 'suppliers', 'invoices', 'accounts', 'journalVouchers', 
+  'purchaseOrders', 'inventory', 'users', 'employees', 'payrollRuns', 'vouchers', 
+  'changeOrders', 'custodies', 'budgetLines', 'supplierBills', 'tasks', 
+  'subcontracts', 'subcontractorPayments', 'attachments', 'assets', 'documents'
+];
+const SETTINGS_COLLECTION = 'app_settings';
+const SETTINGS_DOCS = ['settings', 'permissions'];
+
+export async function clearAllFirestoreData(): Promise<void> {
+  const firebaseServices = initializeFirebase();
+  if (!firebaseServices) throw new Error("Firebase not initialized");
+  const db = firebaseServices.db;
+
+  for (const collectionName of COLLECTIONS) {
+    const querySnapshot = await db.collection(collectionName).get();
+    if (querySnapshot.empty) continue;
+    
+    // Firestore batch writes are limited to 500 operations.
+    // This implementation splits deletes into multiple batches if needed.
+    let batch = db.batch();
+    let count = 0;
+    for (const doc of querySnapshot.docs) {
+      batch.delete(doc.ref);
+      count++;
+      if (count === 499) {
+        await batch.commit();
+        batch = db.batch();
+        count = 0;
+      }
+    }
+    if (count > 0) {
+      await batch.commit();
+    }
+  }
+  
+  const settingsBatch = db.batch();
+  for (const docName of SETTINGS_DOCS) {
+    settingsBatch.delete(db.collection(SETTINGS_COLLECTION).doc(docName));
+  }
+  await settingsBatch.commit();
+}
