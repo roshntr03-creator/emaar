@@ -174,7 +174,7 @@ const Employees: React.FC = () => {
                   <td className="py-3 px-4 border-b">{employee.name}</td>
                   <td className="py-3 px-4 border-b">{employee.jobTitle}</td>
                   <td className="py-3 px-4 border-b">{employee.department}</td>
-                  <td className="py-3 px-4 border-b">﷼{employee.salary.toLocaleString()}</td>
+                  <td className="py-3 px-4 border-b">﷼{employee.salary?.toLocaleString() ?? '0'}</td>
                   <td className="py-3 px-4 border-b">{employee.hireDate}</td>
                   <td className="py-3 px-4 border-b">{getStatusChip(employee.status)}</td>
                   {showActionsColumn && 
