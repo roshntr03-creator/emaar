@@ -76,12 +76,14 @@ const Employees: React.FC = () => {
   const handleSave = async () => {
     try {
         if (editingEmployee) {
-            await api.updateEmployee({ ...editingEmployee, ...formData });
+            const updatedEmployee = await api.updateEmployee({ ...editingEmployee, ...formData });
+            if (updatedEmployee) {
+                setEmployees(prev => prev.map(e => e.id === updatedEmployee.id ? updatedEmployee : e));
+            }
         } else {
-            await api.addEmployee(formData);
+            const newEmployee = await api.addEmployee(formData);
+            setEmployees(prev => [...prev, newEmployee]);
         }
-        const updatedEmployees = await api.getEmployees();
-        setEmployees(updatedEmployees);
         closeModal();
     } catch (error) {
         console.error("Failed to save employee", error);

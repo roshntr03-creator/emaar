@@ -181,12 +181,14 @@ const ChartOfAccounts: React.FC = () => {
     const handleSave = async () => {
       try {
         if (editingAccount) {
-          await api.updateAccount({ ...editingAccount, ...formData });
+          const updatedAccount = await api.updateAccount({ ...editingAccount, ...formData });
+          if(updatedAccount) {
+              setAccounts(accounts.map(a => a.id === updatedAccount.id ? updatedAccount : a));
+          }
         } else {
-          await api.addAccount(formData);
+          const newAccount = await api.addAccount(formData);
+          setAccounts(prevAccounts => [...prevAccounts, newAccount]);
         }
-        const updatedAccounts = await api.getAccounts();
-        setAccounts(updatedAccounts);
         closeModal();
       } catch (error) {
         console.error("Failed to save account", error);

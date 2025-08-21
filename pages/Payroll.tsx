@@ -117,12 +117,14 @@ const Payroll: React.FC = () => {
   const handleSave = async () => {
     try {
       if (selectedRun) {
-        await api.updatePayrollRun({ ...selectedRun, ...formData });
+        const updatedRun = await api.updatePayrollRun({ ...selectedRun, ...formData });
+        if (updatedRun) {
+            setPayrollRuns(prev => prev.map(r => r.id === updatedRun.id ? updatedRun : r));
+        }
       } else {
-        await api.addPayrollRun(formData);
+        const newRun = await api.addPayrollRun(formData);
+        setPayrollRuns(prev => [...prev, newRun]);
       }
-      const updatedRuns = await api.getPayrollRuns();
-      setPayrollRuns(updatedRuns);
       closeModal();
     } catch (error) {
       console.error("Failed to save payroll run", error);

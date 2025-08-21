@@ -38,18 +38,6 @@ const Invoices: React.FC = () => {
   const usingFirebase = isFirebaseConfigured();
   const api = usingFirebase ? firebaseApi : localApi;
 
-  const fetchInvoices = async () => {
-    setIsLoading(true);
-    try {
-      const data = await api.getInvoices();
-      setInvoices(data);
-    } catch (error) {
-      console.error("Failed to fetch invoices", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
     const fetchInitialData = async () => {
         setIsLoading(true);
@@ -103,11 +91,14 @@ const Invoices: React.FC = () => {
   const handleSave = async () => {
     try {
       if (editingInvoice) {
-        await api.updateInvoice({ ...editingInvoice, ...formData });
+        const updatedInvoice = await api.updateInvoice({ ...editingInvoice, ...formData });
+        if (updatedInvoice) {
+            setInvoices(prev => prev.map(i => i.id === updatedInvoice.id ? updatedInvoice : i));
+        }
       } else {
-        await api.addInvoice(formData);
+        const newInvoice = await api.addInvoice(formData);
+        setInvoices(prev => [...prev, newInvoice]);
       }
-      fetchInvoices();
       closeModal();
     } catch (error) {
       console.error("Failed to save invoice", error);
@@ -154,19 +145,19 @@ const Invoices: React.FC = () => {
         return;
     }
     try {
-        // 1. Create the receipt voucher
         const newVoucherData: Omit<Voucher, 'id'> = {
             ...paymentFormData,
             type: 'receipt',
         };
         await api.addVoucher(newVoucherData);
 
-        // 2. Update the invoice status
-        const updatedInvoice: Invoice = { ...payingInvoice, status: 'paid' };
-        await api.updateInvoice(updatedInvoice);
+        const updatedInvoiceData: Invoice = { ...payingInvoice, status: 'paid' };
+        const updatedInvoice = await api.updateInvoice(updatedInvoiceData);
+        
+        if (updatedInvoice) {
+             setInvoices(prev => prev.map(i => i.id === updatedInvoice.id ? updatedInvoice : i));
+        }
 
-        // 3. Refresh data and close modal
-        fetchInvoices();
         closePaymentModal();
         alert('تم تسجيل الدفعة وتحديث الفاتورة بنجاح.');
 

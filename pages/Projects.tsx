@@ -1,9 +1,4 @@
 
-
-
-
-
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { GoogleGenAI, Type } from "@google/genai";
@@ -107,17 +102,19 @@ const Projects: React.FC = () => {
   const handleSave = async () => {
     try {
         if (editingProject) {
-          await api.updateProject({ ...editingProject, ...formData });
+          const updatedProject = await api.updateProject({ ...editingProject, ...formData });
+           if (updatedProject) {
+            setProjects(projects.map(p => p.id === updatedProject.id ? updatedProject : p));
+          }
         } else {
           const newProjectData: Omit<Project, 'id'> = {
             ...formData,
             spent: 0,
             status: 'active'
           };
-          await api.addProject(newProjectData);
+          const newProject = await api.addProject(newProjectData);
+          setProjects(prevProjects => [...prevProjects, newProject]);
         }
-        const updatedProjects = await api.getProjects();
-        setProjects(updatedProjects);
         closeModal();
     } catch(error) {
         console.error("Failed to save project", error);

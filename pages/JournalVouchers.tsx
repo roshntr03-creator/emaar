@@ -1,7 +1,3 @@
-
-
-
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import type { JournalVoucher, JournalVoucherLine, Account } from '../types';
@@ -137,12 +133,14 @@ const JournalVouchers: React.FC = () => {
 
     try {
         if (editingVoucher) {
-            await api.updateJournalVoucher({ ...editingVoucher, ...formData });
+            const updatedVoucher = await api.updateJournalVoucher({ ...editingVoucher, ...formData });
+            if (updatedVoucher) {
+                setVouchers(prev => prev.map(v => v.id === updatedVoucher.id ? updatedVoucher : v));
+            }
         } else {
-            await api.addJournalVoucher(formData);
+            const newVoucher = await api.addJournalVoucher(formData);
+            setVouchers(prev => [...prev, newVoucher]);
         }
-        const updatedVouchers = await api.getJournalVouchers();
-        setVouchers(updatedVouchers);
         closeModal();
     } catch (error) {
         console.error("Failed to save journal voucher", error);

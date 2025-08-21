@@ -103,11 +103,14 @@ const PurchaseOrders: React.FC = () => {
   const handleSave = async () => {
     try {
         if (editingPO) {
-            await api.updatePurchaseOrder({ ...editingPO, ...formData });
+            const updatedPO = await api.updatePurchaseOrder({ ...editingPO, ...formData });
+            if (updatedPO) {
+                setPurchaseOrders(prevPOs => prevPOs.map(po => po.id === updatedPO.id ? updatedPO : po));
+            }
         } else {
-            await api.addPurchaseOrder(formData);
+            const newPO = await api.addPurchaseOrder(formData);
+            setPurchaseOrders(prevPOs => [...prevPOs, newPO]);
         }
-        fetchPOs();
         closeModal();
     } catch (error) {
         console.error("Failed to save purchase order", error);
@@ -130,8 +133,10 @@ const PurchaseOrders: React.FC = () => {
     const poToUpdate = purchaseOrders.find(po => po.id === poId);
     if (!poToUpdate) return;
     try {
-        await api.updatePurchaseOrder({ ...poToUpdate, status });
-        fetchPOs();
+        const updatedPO = await api.updatePurchaseOrder({ ...poToUpdate, status });
+        if (updatedPO) {
+            setPurchaseOrders(prevPOs => prevPOs.map(po => po.id === updatedPO.id ? updatedPO : po));
+        }
     } catch (error) {
         console.error("Failed to update PO status", error);
     } finally {
@@ -145,7 +150,7 @@ const PurchaseOrders: React.FC = () => {
       try {
           const result = await api.completePurchaseOrder(poId);
           if (result) {
-              fetchPOs();
+              fetchPOs(); // Refetch all to update inventory and JVs as well
           } else {
               alert('فشل في استلام أمر الشراء. قد يكون بحالة غير صحيحة.');
           }

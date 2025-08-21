@@ -96,12 +96,14 @@ const Custody: React.FC = () => {
 
     try {
         if (editingCustody) {
-            await api.updateCustody({ ...editingCustody, ...updatedFormData });
+            const updatedCustody = await api.updateCustody({ ...editingCustody, ...updatedFormData });
+            if (updatedCustody) {
+                setCustodies(prev => prev.map(c => c.id === updatedCustody.id ? updatedCustody : c));
+            }
         } else {
-            await api.addCustody(updatedFormData);
+            const newCustody = await api.addCustody(updatedFormData);
+            setCustodies(prev => [...prev, newCustody]);
         }
-        const updatedCustodies = await api.getCustodies();
-        setCustodies(updatedCustodies);
         closeModal();
     } catch (error) {
         console.error("Failed to save custody", error);

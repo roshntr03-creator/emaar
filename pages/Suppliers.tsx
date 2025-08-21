@@ -61,12 +61,14 @@ const Suppliers: React.FC = () => {
   const handleSave = async () => {
     try {
       if (editingSupplier) {
-        await api.updateSupplier({ ...editingSupplier, ...formData });
+        const updatedSupplier = await api.updateSupplier({ ...editingSupplier, ...formData });
+        if(updatedSupplier){
+            setSuppliers(suppliers.map(s => s.id === updatedSupplier.id ? updatedSupplier : s));
+        }
       } else {
-        await api.addSupplier(formData);
+        const newSupplier = await api.addSupplier(formData);
+        setSuppliers(prevSuppliers => [...prevSuppliers, newSupplier]);
       }
-      const updatedSuppliers = await api.getSuppliers();
-      setSuppliers(updatedSuppliers);
       closeModal();
     } catch (error) {
       console.error("Failed to save supplier", error);

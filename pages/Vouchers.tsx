@@ -94,12 +94,14 @@ const Vouchers: React.FC = () => {
   const handleSave = async () => {
     try {
         if (editingVoucher) {
-            await api.updateVoucher({ ...editingVoucher, ...formData });
+            const updatedVoucher = await api.updateVoucher({ ...editingVoucher, ...formData });
+            if (updatedVoucher) {
+                setVouchers(prev => prev.map(v => v.id === updatedVoucher.id ? updatedVoucher : v));
+            }
         } else {
-            await api.addVoucher(formData);
+            const newVoucher = await api.addVoucher(formData);
+            setVouchers(prev => [...prev, newVoucher]);
         }
-        const updatedVouchers = await api.getVouchers();
-        setVouchers(updatedVouchers);
         closeModal();
     } catch (error) {
         console.error("Failed to save voucher", error);

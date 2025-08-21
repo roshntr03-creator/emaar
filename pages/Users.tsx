@@ -87,12 +87,14 @@ const Users: React.FC = () => {
   const handleSave = async () => {
     try {
         if (editingUser) {
-            await api.updateUser({ ...editingUser, ...formData });
+            const updatedUser = await api.updateUser({ ...editingUser, ...formData });
+            if(updatedUser) {
+                setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+            }
         } else {
-            await api.addUser(formData);
+            const newUser = await api.addUser(formData);
+            setUsers(prev => [...prev, newUser]);
         }
-        const updatedUsers = await api.getUsers();
-        setUsers(updatedUsers);
         closeModal();
     } catch (error) {
         console.error("Failed to save user", error);
@@ -179,35 +181,43 @@ const Users: React.FC = () => {
                     </div>
                   </td>
                 </tr>
-              ) : filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
-                  <td className="py-3 px-4 border-b">
-                    <div className="flex items-center">
-                      <img src={user.avatarUrl || `https://i.pravatar.cc/150?u=${user.id}`} alt={user.name} className="w-10 h-10 rounded-full ml-3 object-cover" />
-                      <div>
-                        <p className="font-semibold text-gray-800">{user.name}</p>
-                        <p className="text-sm text-gray-500">{user.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4 border-b">{getRoleChip(user.role)}</td>
-                  <td className="py-3 px-4 border-b">{getStatusChip(user.status)}</td>
-                  {showActionsColumn &&
+            ) : filteredUsers.length > 0 ? (
+                filteredUsers.map((user) => (
+                  <tr key={user.id} className="hover:bg-gray-50">
                     <td className="py-3 px-4 border-b">
-                      <div className="flex justify-center items-center space-x-2 space-x-reverse">
-                        {canEdit && <button onClick={() => openEditModal(user)} className="text-gray-500 hover:text-blue-700 p-1"><Edit size={18} /></button>}
-                        {canDelete && <button onClick={() => handleDelete(user.id)} className="text-gray-500 hover:text-red-700 p-1"><Trash2 size={18} /></button>}
+                      <div className="flex items-center">
+                        <img className="w-10 h-10 rounded-full object-cover ml-4" src={user.avatarUrl || `https://i.pravatar.cc/150?u=${user.id}`} alt={user.name} />
+                        <div>
+                          <p className="font-semibold">{user.name}</p>
+                          <p className="text-sm text-gray-500">{user.email}</p>
+                        </div>
                       </div>
                     </td>
-                  }
+                    <td className="py-3 px-4 border-b">{getRoleChip(user.role)}</td>
+                    <td className="py-3 px-4 border-b">{getStatusChip(user.status)}</td>
+                    {showActionsColumn && (
+                      <td className="py-3 px-4 border-b text-center">
+                        <div className="flex justify-center items-center space-x-2 space-x-reverse">
+                          {canEdit && <button onClick={() => openEditModal(user)} className="text-blue-500 hover:text-blue-700 p-1"><Edit size={18} /></button>}
+                          {canDelete && <button onClick={() => handleDelete(user.id)} className="text-red-500 hover:text-red-700 p-1"><Trash2 size={18} /></button>}
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))
+            ) : (
+                <tr>
+                  <td colSpan={showActionsColumn ? 4 : 3} className="text-center py-10 text-gray-500">
+                    لا يوجد مستخدمون لعرضهم.
+                  </td>
                 </tr>
-              ))}
+            )}
             </tbody>
           </table>
         </div>
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={closeModal} title={editingUser ? "تعديل مستخدم" : "إضافة مستخدم جديد"}>
+      <Modal isOpen={isModalOpen} onClose={closeModal} title={editingUser ? "تعديل بيانات المستخدم" : "إضافة مستخدم جديد"}>
         <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
           <div className="space-y-4">
             <div>
@@ -219,28 +229,17 @@ const Users: React.FC = () => {
               <input type="email" name="email" id="email" value={formData.email} onChange={handleInputChange} required className="w-full px-3 py-2 border border-gray-300 rounded-md" />
             </div>
              <div>
-              <label htmlFor="avatarUrl" className="block text-sm font-medium text-gray-700 mb-1">رابط الصورة الرمزية</label>
-              <input type="text" name="avatarUrl" id="avatarUrl" value={formData.avatarUrl || ''} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+              <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">الدور</label>
+              <select name="role" id="role" value={formData.role} onChange={handleInputChange} required className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white">
+                {Object.entries(roleMap).map(([key, value]) => <option key={key} value={key}>{value}</option>)}
+              </select>
             </div>
-            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm text-yellow-800">
-                <p>ملاحظة: تتم إدارة كلمات المرور للمستخدمين الجدد عبر نظام Firebase Authentication مباشرة لضمان الأمان.</p>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">الدور</label>
-                <select name="role" id="role" value={formData.role} onChange={handleInputChange} required className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white">
-                  {Object.entries(roleMap).map(([key, value]) => (
-                    <option key={key} value={key}>{value}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">الحالة</label>
-                <select name="status" id="status" value={formData.status} onChange={handleInputChange} required className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white">
-                  <option value="active">نشط</option>
-                  <option value="inactive">غير نشط</option>
-                </select>
-              </div>
+            <div>
+              <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">الحالة</label>
+              <select name="status" id="status" value={formData.status} onChange={handleInputChange} required className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white">
+                <option value="active">نشط</option>
+                <option value="inactive">غير نشط</option>
+              </select>
             </div>
           </div>
           <div className="mt-6 flex justify-end space-x-2 space-x-reverse">

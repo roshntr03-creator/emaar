@@ -61,12 +61,14 @@ const Clients: React.FC = () => {
   const handleSave = async () => {
     try {
       if (editingClient) {
-        await api.updateClient({ ...editingClient, ...formData });
+        const updatedClient = await api.updateClient({ ...editingClient, ...formData });
+        if(updatedClient) {
+            setClients(clients.map(c => c.id === updatedClient.id ? updatedClient : c));
+        }
       } else {
-        await api.addClient({ ...formData, activeProjects: 0 });
+        const newClient = await api.addClient({ ...formData, activeProjects: 0 });
+        setClients(prevClients => [...prevClients, newClient]);
       }
-      const updatedClients = await api.getClients();
-      setClients(updatedClients);
       closeModal();
     } catch (error) {
       console.error("Failed to save client", error);

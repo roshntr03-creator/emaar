@@ -63,12 +63,14 @@ const Inventory: React.FC = () => {
   const handleSave = async () => {
     try {
         if (editingItem) {
-            await api.updateInventoryItem({ ...editingItem, ...formData });
+            const updatedItem = await api.updateInventoryItem({ ...editingItem, ...formData });
+            if (updatedItem) {
+                setInventory(prev => prev.map(i => i.id === updatedItem.id ? updatedItem : i));
+            }
         } else {
-            await api.addInventoryItem(formData);
+            const newItem = await api.addInventoryItem(formData);
+            setInventory(prev => [...prev, newItem]);
         }
-        const updatedInventory = await api.getInventory();
-        setInventory(updatedInventory);
         closeModal();
     } catch (error) {
         console.error("Failed to save inventory item", error);

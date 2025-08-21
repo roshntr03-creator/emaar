@@ -77,12 +77,14 @@ const ChangeOrders: React.FC = () => {
   const handleSave = async () => {
     try {
         if (editingOrder) {
-            await api.updateChangeOrder({ ...editingOrder, ...formData });
+            const updatedOrder = await api.updateChangeOrder({ ...editingOrder, ...formData });
+            if (updatedOrder) {
+                setChangeOrders(prev => prev.map(o => o.id === updatedOrder.id ? updatedOrder : o));
+            }
         } else {
-            await api.addChangeOrder(formData);
+            const newOrder = await api.addChangeOrder(formData);
+            setChangeOrders(prev => [...prev, newOrder]);
         }
-        const updatedOrders = await api.getChangeOrders();
-        setChangeOrders(updatedOrders);
         closeModal();
     } catch (error) {
         console.error("Failed to save change order", error);
