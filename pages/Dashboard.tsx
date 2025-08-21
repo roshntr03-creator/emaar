@@ -175,22 +175,22 @@ const Dashboard: React.FC = () => {
         <StatCard 
           icon={<DollarSign className="text-blue-500" />} 
           title="إجمالي الإيرادات" 
-          value={`﷼ ${dashboardData.totalRevenue.toLocaleString()}`}
+          value={`﷼ ${(dashboardData.totalRevenue || 0).toLocaleString()}`}
         />
         <StatCard 
           icon={<Briefcase className="text-green-500" />} 
           title="المشاريع النشطة" 
-          value={dashboardData.activeProjects.toString()} 
+          value={(dashboardData.activeProjects || 0).toString()} 
         />
         <StatCard 
           icon={<Users className="text-indigo-500" />} 
           title="إجمالي العملاء" 
-          value={dashboardData.newClients.toString()} 
+          value={(dashboardData.newClients || 0).toString()} 
         />
         <StatCard 
           icon={<FileText className="text-red-500" />} 
           title="فواتير مستحقة" 
-          value={`﷼ ${dashboardData.dueInvoicesAmount.toLocaleString()}`}
+          value={`﷼ ${(dashboardData.dueInvoicesAmount || 0).toLocaleString()}`}
         />
       </div>
 
@@ -201,7 +201,7 @@ const Dashboard: React.FC = () => {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis tickFormatter={(value) => `﷼${value / 1000}k`} />
-              <Tooltip formatter={(value: number) => `﷼${value.toLocaleString()}`} />
+              <Tooltip formatter={(value: number) => `﷼${(value || 0).toLocaleString()}`} />
               <Legend />
               <Bar dataKey="revenue" fill="#3B82F6" name="الإيرادات" />
             </BarChart>
