@@ -1,10 +1,9 @@
 
-
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
     LayoutDashboard, Briefcase, Users, User, Building, FileText, ShoppingCart, Warehouse, Book, 
-    Contact, DollarSign, Repeat, HandCoins, Receipt, HeartPulse, Settings, FileSpreadsheet, ClipboardSignature, FileArchive, Truck, FolderArchive
+    Contact, DollarSign, Repeat, HandCoins, Receipt, HeartPulse, Settings, FileSpreadsheet, ClipboardSignature, FileArchive, Truck, FolderArchive, Landmark
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -55,6 +54,7 @@ const Sidebar: React.FC = () => {
     { to: '/inventory', icon: <Warehouse size={20} />, label: 'المخزون', module: 'inventory' },
     { to: '/change-orders', icon: <Repeat size={20} />, label: 'تغيير الطلبات', module: 'changeOrders' },
     { to: '/journal-vouchers', icon: <Book size={20} />, label: 'القيود اليومية', module: 'journalVouchers' },
+    { to: '/bank-reconciliation', icon: <Landmark size={20} />, label: 'التسوية البنكية', module: 'bankReconciliation' },
     { to: '/chart-of-accounts', icon: <Book size={20} />, label: 'دليل الحسابات', module: 'chartOfAccounts' },
     { to: '/reports', icon: <FileSpreadsheet size={20} />, label: 'التقارير', module: 'reports' },
     { to: '/users', icon: <User size={20} />, label: 'المستخدمون', module: 'users' },

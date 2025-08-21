@@ -1,13 +1,9 @@
 
-
-
-
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Building, Settings as SettingsIcon, Banknote, Bell, Shield, Loader2, Database, Download, AlertTriangle, Cloud, UploadCloud, KeyRound } from 'lucide-react';
 import type { User, AllRolesPermissions, SettingsData, PermissionAction, ModulePermissions, FirebaseConfig } from '../types';
 import * as localApi from '../api';
-import * as firebaseApi from '../firebase/api';
+import * as firebaseApi from '../api';
 import { isFirebaseConfigured, uploadLocalDataToFirestore } from '../firebase/config';
 import ApiKeyManager from '../components/settings/ApiKeyManager';
 import FirebaseConfigManager from '../components/settings/FirebaseConfigManager';
@@ -44,6 +40,7 @@ const permissionConfig: { [module: string]: { label: string; actions: { key: Per
     supplierBills: { label: 'فواتير الموردين', actions: [{key: 'view', label: 'عرض'}, {key: 'create', label: 'إنشاء'}, {key: 'edit', label: 'تعديل'}, {key: 'delete', label: 'حذف'}] },
     inventory: { label: 'المخزون', actions: [{key: 'view', label: 'عرض'}, {key: 'create', label: 'إنشاء'}, {key: 'edit', label: 'تعديل'}, {key: 'delete', label: 'حذف'}] },
     journalVouchers: { label: 'القيود اليومية', actions: [{key: 'view', label: 'عرض'}, {key: 'create', label: 'إنشاء'}, {key: 'edit', label: 'تعديل'}, {key: 'delete', label: 'حذف'}] },
+    bankReconciliation: { label: 'التسوية البنكية', actions: [{key: 'view', label: 'عرض'}, {key: 'create', label: 'إنشاء'}, {key: 'edit', label: 'تعديل'}, {key: 'delete', label: 'حذف'}] },
     reports: { label: 'التقارير', actions: [{key: 'view', label: 'عرض'}] },
     employees: { label: 'الموظفون', actions: [{key: 'view', label: 'عرض'}, {key: 'create', label: 'إنشاء'}, {key: 'edit', label: 'تعديل'}, {key: 'delete', label: 'حذف'}] },
     users: { label: 'المستخدمون', actions: [{key: 'view', label: 'عرض'}, {key: 'create', label: 'إنشاء'}, {key: 'edit', label: 'تعديل'}, {key: 'delete', label: 'حذف'}] },

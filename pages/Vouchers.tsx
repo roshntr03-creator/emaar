@@ -208,7 +208,7 @@ const Vouchers: React.FC = () => {
                     <td className="py-3 px-4 border-b font-mono">{voucher.id}</td>
                     <td className="py-3 px-4 border-b">{voucher.date}</td>
                     <td className="py-3 px-4 border-b">{voucher.person}</td>
-                    <td className="py-3 px-4 border-b font-bold">﷼{voucher.amount.toLocaleString()}</td>
+                    <td className="py-3 px-4 border-b font-bold">﷼{voucher.amount?.toLocaleString() ?? '0'}</td>
                     <td className="py-3 px-4 border-b">
                       {voucher.relatedInvoiceId && (
                         <span className="flex items-center text-xs text-gray-600">

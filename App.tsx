@@ -1,7 +1,4 @@
 
-
-
-
 import React from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
@@ -33,6 +30,7 @@ import Subcontracts from './pages/Subcontracts';
 import SubcontractDetail from './pages/SubcontractDetail';
 import Assets from './pages/Assets';
 import Documents from './pages/Documents';
+import BankReconciliation from './pages/BankReconciliation';
 
 const App: React.FC = () => {
   return (
@@ -65,6 +63,7 @@ const App: React.FC = () => {
                 <Route path="/vouchers" element={<Vouchers />} />
                 <Route path="/assets" element={<Assets />} />
                 <Route path="/documents" element={<Documents />} />
+                <Route path="/bank-reconciliation" element={<BankReconciliation />} />
                 <Route path="/diagnostics" element={<Diagnostics />} />
                 <Route path="/settings" element={<Settings />} />
               </Route>

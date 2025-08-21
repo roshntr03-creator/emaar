@@ -2,6 +2,8 @@
 
 
 
+
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { GoogleGenAI, Type } from "@google/genai";
@@ -421,17 +423,17 @@ const Projects: React.FC = () => {
           <div className="space-y-4">
             <div className="text-center p-4 bg-gray-50 rounded-lg">
               <p className="text-sm text-gray-600">إجمالي الميزانية التقديرية</p>
-              <p className="text-3xl font-bold text-indigo-600">﷼{estimationResult.estimatedTotalBudget.toLocaleString()}</p>
-              <p className="text-xs text-gray-500 mt-1">درجة الثقة: {estimationResult.confidenceScore}%</p>
+              <p className="text-3xl font-bold text-indigo-600">﷼{(estimationResult.estimatedTotalBudget || 0).toLocaleString()}</p>
+              <p className="text-xs text-gray-500 mt-1">درجة الثقة: {estimationResult.confidenceScore || 0}%</p>
             </div>
             <div>
               <h4 className="font-semibold mb-2">تفصيل التكاليف:</h4>
               <ul className="space-y-2 text-sm">
-                {estimationResult.costBreakdown.map((item, index) => (
+                {(estimationResult.costBreakdown || []).map((item, index) => (
                   <li key={index} className="p-2 bg-gray-100 rounded-md">
                     <div className="flex justify-between font-medium">
                       <span>{item.category}</span>
-                      <span>﷼{item.amount.toLocaleString()}</span>
+                      <span>﷼{(item.amount || 0).toLocaleString()}</span>
                     </div>
                     <p className="text-xs text-gray-600">{item.description}</p>
                   </li>
@@ -441,7 +443,7 @@ const Projects: React.FC = () => {
             <div>
               <h4 className="font-semibold mb-2">الافتراضات:</h4>
               <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                {estimationResult.assumptions.map((item, index) => <li key={index}>{item}</li>)}
+                {(estimationResult.assumptions || []).map((item, index) => <li key={index}>{item}</li>)}
               </ul>
             </div>
              <div className="mt-6 flex justify-end space-x-2 space-x-reverse">
