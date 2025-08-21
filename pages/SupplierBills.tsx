@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import type { SupplierBill } from '../types';
@@ -8,7 +9,6 @@ import * as localApi from '../api';
 import * as firebaseApi from '../firebase/api';
 import { isFirebaseConfigured } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
-import { useApiKey } from '../contexts/ApiKeyContext';
 
 const getStatusChip = (status: 'paid' | 'unpaid' | 'overdue') => {
   const styles = {
@@ -43,7 +43,6 @@ const SupplierBills: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | SupplierBill['status']>('all');
   const { hasPermission } = useAuth();
-  const { apiKey } = useApiKey();
   
   const [isAiScanning, setIsAiScanning] = useState(false);
   const [aiError, setAiError] = useState('');
@@ -124,15 +123,9 @@ const SupplierBills: React.FC = () => {
 
     setIsAiScanning(true);
     setAiError('');
-    
-    if (!apiKey) {
-        setAiError("الرجاء إعداد مفتاح Google AI API في صفحة الإعدادات لتفعيل هذه الميزة.");
-        setIsAiScanning(false);
-        return;
-    }
 
     try {
-        const ai = new GoogleGenAI({ apiKey });
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const imagePart = await fileToGenerativePart(file);
         
         const prompt = `أنت نظام OCR محاسبي متخصص في فواتير المقاولات. قم بتحليل صورة الفاتورة التالية واستخرج البيانات الأساسية منها.\n\n- استخرج اسم المورد.\n- استخرج تاريخ إصدار الفاتورة بصيغة YYYY-MM-DD.\n- استخرج المبلغ الإجمالي النهائي للفاتورة كرقم.\n- إذا كان تاريخ الاستحقاق موجودًا، استخرجه بصيغة YYYY-MM-DD.\n- تجاهل أي ضرائب أو خصومات، ركز فقط على المبلغ الإجمالي النهائي.\n\nيجب أن يكون الناتج بصيغة JSON حصراً.`;
@@ -168,11 +161,7 @@ const SupplierBills: React.FC = () => {
 
     } catch (error) {
         console.error("Error analyzing invoice:", error);
-         if (error instanceof Error && error.message.includes('API key not valid')) {
-            setAiError("مفتاح API غير صالح. يرجى التحقق منه في صفحة الإعدادات.");
-        } else {
-            setAiError("عذراً، لم نتمكن من تحليل الفاتورة. يرجى المحاولة مرة أخرى أو إدخال البيانات يدوياً.");
-        }
+        setAiError("عذراً، لم نتمكن من تحليل الفاتورة. يرجى المحاولة مرة أخرى أو إدخال البيانات يدوياً.");
     } finally {
         setIsAiScanning(false);
          if (fileInputRef.current) {

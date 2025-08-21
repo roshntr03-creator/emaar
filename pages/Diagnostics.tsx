@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import { Server, ShieldCheck, CheckCircle, XCircle, AlertCircle, BrainCircuit, Loader2, CircleDot, KeyRound, Activity, Database, Link2 } from 'lucide-react';
@@ -8,7 +9,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import * as localApi from '../api';
 import * as firebaseApi from '../firebase/api';
 import { isFirebaseConfigured } from '../firebase/config';
-import { useApiKey } from '../contexts/ApiKeyContext';
+import { getFirebaseConfig } from '../firebase/config';
 
 // --- Mock Data ---
 const perfData: { time: string, ms: number }[] = [
@@ -153,7 +154,7 @@ const Diagnostics: React.FC = () => {
     const [checkStatus, setCheckStatus] = useState<'idle' | 'checking' | 'complete'>('idle');
     const [checkResults, setCheckResults] = useState<CheckResult[]>([]);
     const [summary, setSummary] = useState({ pass: 0, fail: 0 });
-    const { apiKey } = useApiKey();
+    const isAiConfigured = !!process.env.API_KEY;
     
     const usingFirebase = isFirebaseConfigured();
     const api = usingFirebase ? firebaseApi : localApi;
@@ -201,14 +202,14 @@ const Diagnostics: React.FC = () => {
         setIsAnalyzing(true);
         setAnalysisResult('');
         
-        if (!apiKey) {
-            setAnalysisResult("الرجاء إعداد مفتاح Google AI API في صفحة الإعدادات لتفعيل التحليل الذكي.");
+        if (!isAiConfigured) {
+            setAnalysisResult("ميزة التحليل الذكي غير متاحة. يرجى التأكد من تكوين مفتاح API.");
             setIsAnalyzing(false);
             return;
         }
 
         try {
-            const ai = new GoogleGenAI({ apiKey });
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const prompt = `
                 أنت خبير في تشخيص أنظمة المحاسبة لشركات المقاولات. 
                 اشرح المشكلة التالية بأسلوب مبسط لمدير غير تقني.
@@ -234,11 +235,7 @@ const Diagnostics: React.FC = () => {
         
         } catch (error) {
             console.error("Error generating analysis:", error);
-            if (error instanceof Error && error.message.includes('API key not valid')) {
-                setAnalysisResult("مفتاح API غير صالح. يرجى التحقق منه في صفحة الإعدادات.");
-            } else {
-                setAnalysisResult("عذراً، حدث خطأ أثناء تحليل المشكلة. يرجى المحاولة مرة أخرى.");
-            }
+            setAnalysisResult("عذراً، حدث خطأ أثناء تحليل المشكلة. يرجى المحاولة مرة أخرى لاحقاً.");
         } finally {
             setIsAnalyzing(false);
         }
@@ -267,9 +264,9 @@ const Diagnostics: React.FC = () => {
                         </div>
                          <div className="flex items-center justify-between">
                             <span className="flex items-center text-gray-700"><BrainCircuit size={16} className="ml-2 text-indigo-500" /> اتصال Google AI</span>
-                            <span className={`flex items-center text-sm px-2 py-1 rounded-md ${apiKey ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                                {apiKey ? <CheckCircle size={14} className="ml-1" /> : <AlertCircle size={14} className="ml-1" />}
-                                {apiKey ? 'نشط' : 'غير مكون'}
+                            <span className={`flex items-center text-sm px-2 py-1 rounded-md ${isAiConfigured ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                {isAiConfigured ? <CheckCircle size={14} className="ml-1" /> : <AlertCircle size={14} className="ml-1" />}
+                                {isAiConfigured ? 'نشط' : 'غير مكون'}
                             </span>
                         </div>
                     </div>

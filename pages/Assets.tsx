@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import type { Asset, AiDepreciationEstimate, Project } from '../types';
@@ -9,7 +10,6 @@ import * as localApi from '../api';
 import * as firebaseApi from '../firebase/api';
 import { isFirebaseConfigured } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
-import { useApiKey } from '../contexts/ApiKeyContext';
 
 const getStatusChip = (status: Asset['status']) => {
   const styles = {
@@ -36,7 +36,6 @@ const Assets: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | Asset['status']>('all');
   const { hasPermission } = useAuth();
-  const { apiKey } = useApiKey();
   
   const [isDepreciationModalOpen, setIsDepreciationModalOpen] = useState(false);
   const [isEstimating, setIsEstimating] = useState(false);
@@ -116,15 +115,11 @@ const Assets: React.FC = () => {
   };
   
   const handleGenerateEstimate = async () => {
-    if (!apiKey) {
-        setEstimationError("الرجاء إعداد مفتاح Google AI API في صفحة الإعدادات.");
-        return;
-    }
     setIsEstimating(true);
     setEstimationResult(null);
     setEstimationError('');
     try {
-      const ai = new GoogleGenAI({ apiKey });
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const prompt = `أنت خبير محاسبي. للأصل التالي:
         - اسم الأصل: ${formData.name}
         - تكلفة الشراء: ${formData.purchaseCost} ريال سعودي
@@ -154,11 +149,8 @@ const Assets: React.FC = () => {
       });
       setEstimationResult(JSON.parse(response.text));
     } catch (e) {
-      if (e instanceof Error && e.message.includes('API key not valid')) {
-            setEstimationError("مفتاح API غير صالح. يرجى التحقق منه في صفحة الإعدادات.");
-        } else {
-            setEstimationError("عذرًا، حدث خطأ. يرجى المحاولة مرة أخرى.");
-        }
+      console.error("Error generating depreciation estimate:", e);
+      setEstimationError("عذرًا، حدث خطأ. يرجى المحاولة مرة أخرى لاحقاً.");
     } finally {
       setIsEstimating(false);
     }

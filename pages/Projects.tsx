@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { GoogleGenAI, Type } from "@google/genai";
@@ -9,7 +10,6 @@ import * as localApi from '../api';
 import * as firebaseApi from '../firebase/api';
 import { isFirebaseConfigured } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
-import { useApiKey } from '../contexts/ApiKeyContext';
 
 const getStatusChip = (status: 'active' | 'completed' | 'on_hold') => {
   switch (status) {
@@ -29,7 +29,6 @@ const Projects: React.FC = () => {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | Project['status']>('all');
   const { hasPermission } = useAuth();
-  const { apiKey } = useApiKey();
   
   const [isEstimationModalOpen, setIsEstimationModalOpen] = useState(false);
   const [isEstimating, setIsEstimating] = useState(false);
@@ -141,10 +140,6 @@ const Projects: React.FC = () => {
   const closeEstimationModal = () => setIsEstimationModalOpen(false);
 
   const handleGenerateEstimate = async () => {
-    if (!apiKey) {
-      setEstimationError("الرجاء إعداد مفتاح Google AI API في صفحة الإعدادات.");
-      return;
-    }
     if (!estimationPrompt) {
       setEstimationError('الرجاء إدخال وصف للمشروع.');
       return;
@@ -166,7 +161,7 @@ const Projects: React.FC = () => {
         durationInDays: Math.round((new Date(p.endDate).getTime() - new Date(p.startDate).getTime()) / (1000 * 60 * 60 * 24)),
       }));
 
-      const ai = new GoogleGenAI({ apiKey });
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const prompt = `
         أنت خبير تقدير تكاليف في قطاع المقاولات بالمملكة العربية السعودية. مهمتك هي تحليل وصف المشروع التالي وتقديم تقدير تكلفة مفصل ومبني على البيانات التاريخية للمشاريع السابقة.
 
@@ -219,11 +214,7 @@ const Projects: React.FC = () => {
 
     } catch (e) {
       console.error("Error generating estimate:", e);
-       if (e instanceof Error && e.message.includes('API key not valid')) {
-            setEstimationError("مفتاح API غير صالح. يرجى التحقق منه في صفحة الإعدادات.");
-        } else {
-            setEstimationError("عذرًا، حدث خطأ أثناء إنشاء التقدير. يرجى المحاولة مرة أخرى.");
-        }
+      setEstimationError("عذرًا، حدث خطأ أثناء إنشاء التقدير. يرجى المحاولة مرة أخرى لاحقاً.");
     } finally {
       setIsEstimating(false);
     }

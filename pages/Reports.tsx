@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import { BrainCircuit, Loader2, Send, User as UserIcon, Bot, KeyRound, BarChart2, AlertCircle, Printer, FileText, BarChart, PieChart } from 'lucide-react';
@@ -8,7 +10,6 @@ import { isFirebaseConfigured } from '../firebase/config';
 import type { AiFinancialResponse, AiDataTable, AiChartData, JournalVoucher, Account, SettingsData, ReportLine } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import Tabs from '../components/ui/Tabs';
-import { useApiKey } from '../contexts/ApiKeyContext';
 
 // --- Helper Functions for Report Generation ---
 
@@ -60,7 +61,6 @@ const ReportPrintWrapper: React.FC<ReportPrintWrapperProps> = ({ reportId, setti
 // --- AI Analyst Tab Component ---
 const AiAnalystTab: React.FC = () => {
     const { user } = useAuth();
-    const { apiKey } = useApiKey();
     const usingFirebase = isFirebaseConfigured();
     const api = usingFirebase ? firebaseApi : localApi;
     const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -86,17 +86,12 @@ const AiAnalystTab: React.FC = () => {
             return;
         }
         
-        if (!apiKey) {
-            setError("الرجاء إعداد مفتاح Google AI API في صفحة الإعدادات لتفعيل هذه الميزة.");
-            return;
-        }
-        
         setError(''); setIsLoading(true); setUserInput('');
         setMessages(prev => [...prev, { id: `user-${Date.now()}`, sender: 'user', content: query }]);
 
         try {
             const financialData = await api.getFinancialOverviewData();
-            const ai = new GoogleGenAI({ apiKey });
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             
             const fullPrompt = `أنت محلل مالي خبير في شركة مقاولات سعودية. مهمتك هي تحليل البيانات المالية التالية والإجابة على سؤال المستخدم باللغة العربية.\n\nالبيانات المالية للشركة (بتنسيق JSON):\n${JSON.stringify(financialData, null, 2)}\n\nسؤال المستخدم: "${query}"\n\nالتعليمات:\n1. قدم إجابة نصية واضحة وموجزة في حقل 'insight'.\n2. إذا كانت الإجابة تحتوي على بيانات جدولية، قم بتعبئة حقل 'table' بالبيانات المطلوبة. يجب أن تكون جميع قيم الجدول كنصوص.\n3. إذا كانت البيانات مناسبة للعرض البياني (مثل مقارنات أو اتجاهات زمنية)، قم بتعبئة حقل 'chart' بالبيانات اللازمة.\n4. يجب أن يكون الناتج كاملاً بتنسيق JSON بناءً على المخطط المحدد. لا تضف أي نصوص خارج بنية JSON.`;
             
@@ -111,11 +106,7 @@ const AiAnalystTab: React.FC = () => {
 
         } catch (err) {
             console.error("Error generating AI response:", err);
-             if (err instanceof Error && err.message.includes('API key not valid')) {
-                 setError("مفتاح Google AI API غير صالح. يرجى التحقق منه في الإعدادات.");
-            } else {
-                setError("عذراً، حدث خطأ أثناء تحليل طلبك. يرجى المحاولة مرة أخرى.");
-            }
+            setError("عذراً، حدث خطأ أثناء تحليل طلبك. يرجى المحاولة مرة أخرى لاحقاً.");
         } finally {
             setIsLoading(false);
         }

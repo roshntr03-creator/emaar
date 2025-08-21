@@ -18,8 +18,7 @@
     "jspdf": "2.5.1",
     "jspdf-autotable": "3.8.2",
     "gantt-task-react": "0.3.9",
-    "@firebase/app": "^0.14.1",
-    "firebase": "^12.1.0"
+    "firebase": "10.12.2"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
