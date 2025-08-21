@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import type { SupplierBill } from '../types';
@@ -9,6 +11,7 @@ import * as localApi from '../api';
 import * as firebaseApi from '../firebase/api';
 import { isFirebaseConfigured } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
+import { useApiKey } from '../contexts/ApiKeyContext';
 
 const getStatusChip = (status: 'paid' | 'unpaid' | 'overdue') => {
   const styles = {
@@ -43,6 +46,7 @@ const SupplierBills: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | SupplierBill['status']>('all');
   const { hasPermission } = useAuth();
+  const { apiKey } = useApiKey();
   
   const [isAiScanning, setIsAiScanning] = useState(false);
   const [aiError, setAiError] = useState('');
@@ -121,11 +125,16 @@ const SupplierBills: React.FC = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    if (!apiKey) {
+      alert("يرجى إعداد مفتاح Google AI API في صفحة الإعدادات لتفعيل هذه الميزة.");
+      return;
+    }
+
     setIsAiScanning(true);
     setAiError('');
 
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey });
         const imagePart = await fileToGenerativePart(file);
         
         const prompt = `أنت نظام OCR محاسبي متخصص في فواتير المقاولات. قم بتحليل صورة الفاتورة التالية واستخرج البيانات الأساسية منها.\n\n- استخرج اسم المورد.\n- استخرج تاريخ إصدار الفاتورة بصيغة YYYY-MM-DD.\n- استخرج المبلغ الإجمالي النهائي للفاتورة كرقم.\n- إذا كان تاريخ الاستحقاق موجودًا، استخرجه بصيغة YYYY-MM-DD.\n- تجاهل أي ضرائب أو خصومات، ركز فقط على المبلغ الإجمالي النهائي.\n\nيجب أن يكون الناتج بصيغة JSON حصراً.`;
@@ -161,7 +170,7 @@ const SupplierBills: React.FC = () => {
 
     } catch (error) {
         console.error("Error analyzing invoice:", error);
-        setAiError("عذراً، لم نتمكن من تحليل الفاتورة. يرجى المحاولة مرة أخرى أو إدخال البيانات يدوياً.");
+        setAiError("عذراً، لم نتمكن من تحليل الفاتورة. تأكد من أن مفتاح API صحيح ونشط.");
     } finally {
         setIsAiScanning(false);
          if (fileInputRef.current) {
@@ -187,7 +196,7 @@ const SupplierBills: React.FC = () => {
             <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageUpload} className="hidden" disabled={isAiScanning}/>
             <button
                 onClick={() => fileInputRef.current?.click()}
-                disabled={isAiScanning}
+                disabled={isAiScanning || !apiKey}
                 className="flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:bg-indigo-400"
             >
                 {isAiScanning ? <Loader2 size={16} className="ml-2 animate-spin"/> : <BrainCircuit size={16} className="ml-2"/>}

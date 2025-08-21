@@ -1,12 +1,15 @@
 
 
 
+
+
 import React, { useState, useEffect, useCallback } from 'react';
-import { Building, Settings as SettingsIcon, Banknote, Bell, Shield, Loader2, Database, Download, AlertTriangle, Cloud, UploadCloud } from 'lucide-react';
+import { Building, Settings as SettingsIcon, Banknote, Bell, Shield, Loader2, Database, Download, AlertTriangle, Cloud, UploadCloud, KeyRound } from 'lucide-react';
 import type { User, AllRolesPermissions, SettingsData, PermissionAction, ModulePermissions, FirebaseConfig } from '../types';
 import * as localApi from '../api';
 import * as firebaseApi from '../firebase/api';
 import { isFirebaseConfigured, uploadLocalDataToFirestore } from '../firebase/config';
+import ApiKeyManager from '../components/settings/ApiKeyManager';
 import FirebaseConfigManager from '../components/settings/FirebaseConfigManager';
 
 
@@ -17,6 +20,7 @@ const settingsTabs = [
   { id: 'financial', label: 'إعدادات مالية', icon: Banknote },
   { id: 'notifications', label: 'الإشعارات', icon: Bell },
   { id: 'roles', label: 'الأدوار والصلاحيات', icon: Shield },
+  { id: 'apiKeys', label: 'مفاتيح API', icon: KeyRound },
   { id: 'data', label: 'البيانات', icon: Database },
 ];
 
@@ -497,6 +501,8 @@ const Settings: React.FC = () => {
                 </SettingsFormTab>;
             case 'roles':
                  return <RolesPermissionsTab />;
+            case 'apiKeys':
+                return <ApiKeyManager />;
             case 'data':
                 return <DataManagementTab />;
             default:

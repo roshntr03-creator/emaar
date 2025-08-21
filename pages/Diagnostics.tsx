@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import { Server, ShieldCheck, CheckCircle, XCircle, AlertCircle, BrainCircuit, Loader2, CircleDot, KeyRound, Activity, Database, Link2 } from 'lucide-react';
@@ -9,7 +11,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import * as localApi from '../api';
 import * as firebaseApi from '../firebase/api';
 import { isFirebaseConfigured } from '../firebase/config';
-import { getFirebaseConfig } from '../firebase/config';
+import { useApiKey } from '../contexts/ApiKeyContext';
 
 // --- Mock Data ---
 const perfData: { time: string, ms: number }[] = [
@@ -154,7 +156,8 @@ const Diagnostics: React.FC = () => {
     const [checkStatus, setCheckStatus] = useState<'idle' | 'checking' | 'complete'>('idle');
     const [checkResults, setCheckResults] = useState<CheckResult[]>([]);
     const [summary, setSummary] = useState({ pass: 0, fail: 0 });
-    const isAiConfigured = !!process.env.API_KEY;
+    const { apiKey } = useApiKey();
+    const isAiConfigured = !!apiKey;
     
     const usingFirebase = isFirebaseConfigured();
     const api = usingFirebase ? firebaseApi : localApi;
@@ -202,14 +205,14 @@ const Diagnostics: React.FC = () => {
         setIsAnalyzing(true);
         setAnalysisResult('');
         
-        if (!isAiConfigured) {
-            setAnalysisResult("ميزة التحليل الذكي غير متاحة. يرجى التأكد من تكوين مفتاح API.");
+        if (!isAiConfigured || !apiKey) {
+            setAnalysisResult("ميزة التحليل الذكي غير متاحة. يرجى التأكد من تكوين مفتاح API في صفحة الإعدادات.");
             setIsAnalyzing(false);
             return;
         }
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const ai = new GoogleGenAI({ apiKey });
             const prompt = `
                 أنت خبير في تشخيص أنظمة المحاسبة لشركات المقاولات. 
                 اشرح المشكلة التالية بأسلوب مبسط لمدير غير تقني.
@@ -235,7 +238,7 @@ const Diagnostics: React.FC = () => {
         
         } catch (error) {
             console.error("Error generating analysis:", error);
-            setAnalysisResult("عذراً، حدث خطأ أثناء تحليل المشكلة. يرجى المحاولة مرة أخرى لاحقاً.");
+            setAnalysisResult("عذراً، حدث خطأ أثناء تحليل المشكلة. تأكد من أن مفتاح API الخاص بك صحيح ونشط.");
         } finally {
             setIsAnalyzing(false);
         }
@@ -319,7 +322,7 @@ const Diagnostics: React.FC = () => {
                                             <p className="text-sm text-gray-600">{result.message}</p>
                                         </div>
                                         {result.status === 'fail' && (
-                                            <button onClick={() => handleAiAnalysis(result)} className="flex items-center text-xs px-2 py-1 text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200">
+                                            <button onClick={() => handleAiAnalysis(result)} disabled={!isAiConfigured} className="flex items-center text-xs px-2 py-1 text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 disabled:bg-gray-100 disabled:text-gray-500">
                                                 <BrainCircuit size={14} className="ml-1" /> تحليل
                                             </button>
                                         )}

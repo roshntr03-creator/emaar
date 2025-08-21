@@ -1,6 +1,6 @@
 
-
 import React, { useState, useMemo, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { GoogleGenAI } from "@google/genai";
 import { DollarSign, Briefcase, Users, FileText, ShoppingCart, Book, BrainCircuit, Loader2, KeyRound } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -9,6 +9,7 @@ import StatCard from '../components/ui/StatCard';
 import * as localApi from '../api';
 import * as firebaseApi from '../firebase/api';
 import { isFirebaseConfigured } from '../firebase/config';
+import { useApiKey } from '../contexts/ApiKeyContext';
 import type { Project, Invoice, Client } from '../types';
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B'];
@@ -17,6 +18,7 @@ const Dashboard: React.FC = () => {
   const [summary, setSummary] = useState('');
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
   const [summaryError, setSummaryError] = useState('');
+  const { apiKey } = useApiKey();
 
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -103,6 +105,10 @@ const Dashboard: React.FC = () => {
   }, [projects, invoices, clients]);
 
   const handleGenerateSummary = async () => {
+      if (!apiKey) {
+        setSummaryError("يرجى إعداد مفتاح Google AI API في صفحة الإعدادات لتفعيل هذه الميزة.");
+        return;
+      }
       setIsLoadingSummary(true);
       setSummaryError('');
       setSummary('');
@@ -117,7 +123,7 @@ const Dashboard: React.FC = () => {
       };
 
       try {
-          const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+          const ai = new GoogleGenAI({ apiKey });
           const prompt = `
           أنت مستشار مالي استراتيجي (CFO) لشركة مقاولات في المملكة العربية السعودية. مهمتك هي تحليل البيانات المالية التالية وكتابة ملخص تنفيذي موجز ومؤثر لمدير الشركة.
 
@@ -141,7 +147,7 @@ const Dashboard: React.FC = () => {
 
       } catch (error) {
           console.error("Error generating summary:", error);
-          setSummaryError("عذراً، حدث خطأ أثناء إنشاء الملخص. يرجى المحاولة مرة أخرى لاحقاً.");
+          setSummaryError("عذراً، حدث خطأ أثناء إنشاء الملخص. تأكد من أن مفتاح API الخاص بك صحيح ونشط.");
       } finally {
           setIsLoadingSummary(false);
       }
@@ -246,6 +252,12 @@ const Dashboard: React.FC = () => {
                       <BrainCircuit size={16} className="ml-2" />
                       توليد الملخص الآن
                   </button>
+                   {!apiKey && (
+                    <div className="mt-4 text-xs text-yellow-800 bg-yellow-50 p-2 rounded-md flex items-center">
+                        <KeyRound size={14} className="ml-2"/>
+                        <span>ميزة الذكاء الاصطناعي معطلة. يرجى <Link to="/settings" className="font-bold underline">إضافة مفتاح API</Link> لتفعيلها.</span>
+                    </div>
+                  )}
               </div>
           )}
         </Card>

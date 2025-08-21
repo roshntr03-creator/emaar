@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import type { JournalVoucher, JournalVoucherLine, Account } from '../types';
@@ -9,6 +11,7 @@ import * as localApi from '../api';
 import * as firebaseApi from '../firebase/api';
 import { isFirebaseConfigured } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
+import { useApiKey } from '../contexts/ApiKeyContext';
 
 const getStatusChip = (status: 'posted' | 'draft') => {
   switch (status) {
@@ -29,6 +32,7 @@ const JournalVouchers: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | JournalVoucher['status']>('all');
   const { hasPermission } = useAuth();
+  const { apiKey } = useApiKey();
   
   const [aiPrompt, setAiPrompt] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
@@ -157,6 +161,10 @@ const JournalVouchers: React.FC = () => {
   };
   
   const handleAiGenerate = async () => {
+    if (!apiKey) {
+        setAiError('يرجى إعداد مفتاح Google AI API في صفحة الإعدادات لتفعيل هذه الميزة.');
+        return;
+    }
     if (!aiPrompt) {
         setAiError('الرجاء إدخال وصف للعملية المالية.');
         return;
@@ -168,7 +176,7 @@ const JournalVouchers: React.FC = () => {
     const chartOfAccountsForAI = accounts.map(({ id, code, name, type }) => ({ id, code, name, type }));
 
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey });
         const prompt = `
             أنت خبير محاسبة في شركة مقاولات سعودية. مهمتك هي تحليل الوصف التالي للعملية المالية وإنشاء قيد يومية متوازن.
             
@@ -216,7 +224,7 @@ const JournalVouchers: React.FC = () => {
 
     } catch (error) {
         console.error("Error generating journal voucher:", error);
-        setAiError("حدث خطأ أثناء التواصل مع الذكاء الاصطناعي. يرجى المحاولة مرة أخرى لاحقاً.");
+        setAiError("حدث خطأ أثناء التواصل مع الذكاء الاصطناعي. تأكد من أن مفتاح API صحيح ونشط.");
     } finally {
         setIsAiLoading(false);
     }
@@ -345,16 +353,18 @@ const JournalVouchers: React.FC = () => {
                         placeholder="مثال: دفع فاتورة كهرباء بقيمة 500 ريال نقداً"
                         rows={2}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        disabled={!apiKey}
                     />
                     <button
                         type="button"
                         onClick={handleAiGenerate}
-                        disabled={isAiLoading}
+                        disabled={isAiLoading || !apiKey}
                         className="mt-2 w-full flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-blue-400"
                     >
                         {isAiLoading ? <Loader2 className="animate-spin" size={16} /> : "إنشاء القيد"}
                     </button>
                     {aiError && <p className="text-xs text-red-600 mt-2">{aiError}</p>}
+                    {!apiKey && <p className="text-xs text-yellow-800 bg-yellow-50 p-2 rounded-md mt-2">يرجى إعداد مفتاح API في الإعدادات لتفعيل هذه الميزة.</p>}
               </div>
             )}
             

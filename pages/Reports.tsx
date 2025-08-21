@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import { BrainCircuit, Loader2, Send, User as UserIcon, Bot, KeyRound, BarChart2, AlertCircle, Printer, FileText, BarChart, PieChart } from 'lucide-react';
@@ -9,6 +11,7 @@ import * as firebaseApi from '../firebase/api';
 import { isFirebaseConfigured } from '../firebase/config';
 import type { AiFinancialResponse, AiDataTable, AiChartData, JournalVoucher, Account, SettingsData, ReportLine } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import { useApiKey } from '../contexts/ApiKeyContext';
 import Tabs from '../components/ui/Tabs';
 
 // --- Helper Functions for Report Generation ---
@@ -61,6 +64,7 @@ const ReportPrintWrapper: React.FC<ReportPrintWrapperProps> = ({ reportId, setti
 // --- AI Analyst Tab Component ---
 const AiAnalystTab: React.FC = () => {
     const { user } = useAuth();
+    const { apiKey } = useApiKey();
     const usingFirebase = isFirebaseConfigured();
     const api = usingFirebase ? firebaseApi : localApi;
     const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -86,12 +90,17 @@ const AiAnalystTab: React.FC = () => {
             return;
         }
         
+        if (!apiKey) {
+            setError("يرجى إعداد مفتاح Google AI API في صفحة الإعدادات لتفعيل المحلل المالي.");
+            return;
+        }
+        
         setError(''); setIsLoading(true); setUserInput('');
         setMessages(prev => [...prev, { id: `user-${Date.now()}`, sender: 'user', content: query }]);
 
         try {
             const financialData = await api.getFinancialOverviewData();
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const ai = new GoogleGenAI({ apiKey });
             
             const fullPrompt = `أنت محلل مالي خبير في شركة مقاولات سعودية. مهمتك هي تحليل البيانات المالية التالية والإجابة على سؤال المستخدم باللغة العربية.\n\nالبيانات المالية للشركة (بتنسيق JSON):\n${JSON.stringify(financialData, null, 2)}\n\nسؤال المستخدم: "${query}"\n\nالتعليمات:\n1. قدم إجابة نصية واضحة وموجزة في حقل 'insight'.\n2. إذا كانت الإجابة تحتوي على بيانات جدولية، قم بتعبئة حقل 'table' بالبيانات المطلوبة. يجب أن تكون جميع قيم الجدول كنصوص.\n3. إذا كانت البيانات مناسبة للعرض البياني (مثل مقارنات أو اتجاهات زمنية)، قم بتعبئة حقل 'chart' بالبيانات اللازمة.\n4. يجب أن يكون الناتج كاملاً بتنسيق JSON بناءً على المخطط المحدد. لا تضف أي نصوص خارج بنية JSON.`;
             
@@ -106,7 +115,7 @@ const AiAnalystTab: React.FC = () => {
 
         } catch (err) {
             console.error("Error generating AI response:", err);
-            setError("عذراً، حدث خطأ أثناء تحليل طلبك. يرجى المحاولة مرة أخرى لاحقاً.");
+            setError("عذراً، حدث خطأ أثناء تحليل طلبك. تأكد من أن مفتاح API الخاص بك صحيح ونشط.");
         } finally {
             setIsLoading(false);
         }
@@ -133,7 +142,7 @@ const AiAnalystTab: React.FC = () => {
           {messages.map(msg => <div key={msg.id} className={`flex items-start gap-4 ${msg.sender === 'user' ? 'flex-row-reverse' : ''}`}><div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${msg.sender === 'ai' ? 'bg-blue-500' : 'bg-gray-600'}`}>{msg.sender === 'ai' ? <Bot className="text-white" /> : <UserIcon className="text-white" />}</div><div className={`p-4 rounded-lg max-w-2xl ${msg.sender === 'ai' ? 'bg-white border' : 'bg-blue-500 text-white'}`}>{typeof msg.content === 'string' ? <p>{msg.content}</p> : <div><p>{msg.content.insight}</p>{msg.content.table && <AiTable tableData={msg.content.table} />}{msg.content.chart && <AiChart chartData={msg.content.chart} />}</div>}</div></div>)}
           {isLoading && <div className="flex items-start gap-4"><div className="w-10 h-10 rounded-full bg-blue-500 flex-shrink-0 flex items-center justify-center"><Bot className="text-white" /></div><div className="p-4 rounded-lg bg-white border flex items-center"><Loader2 className="w-5 h-5 animate-spin text-gray-600 ml-2" /><span className="text-gray-700">...يفكر المحلل</span></div></div>}
         </div>
-        <div className="p-4 border-t bg-white"><div className="mb-3 flex flex-wrap gap-2">{sampleQuestions.map(q => <button key={q} onClick={() => handleSendMessage(q)} disabled={isLoading} className="px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 disabled:opacity-50">{q}</button>)}</div><form onSubmit={e => { e.preventDefault(); handleSendMessage(); }} className="flex items-center gap-2"><input type="text" value={userInput} onChange={e => setUserInput(e.target.value)} placeholder="اسأل عن أي شيء يخص بياناتك المالية..." className="flex-1 w-full px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500" disabled={isLoading} /><button type="submit" disabled={isLoading || !userInput.trim()} className="p-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed flex-shrink-0"><Send size={18} /></button></form>{error && <p className="text-sm text-red-600 mt-2 text-center">{error}</p>}</div>
+        <div className="p-4 border-t bg-white"><div className="mb-3 flex flex-wrap gap-2">{sampleQuestions.map(q => <button key={q} onClick={() => handleSendMessage(q)} disabled={isLoading || !apiKey} className="px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 disabled:opacity-50">{q}</button>)}</div><form onSubmit={e => { e.preventDefault(); handleSendMessage(); }} className="flex items-center gap-2"><input type="text" value={userInput} onChange={e => setUserInput(e.target.value)} placeholder="اسأل عن أي شيء يخص بياناتك المالية..." className="flex-1 w-full px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500" disabled={isLoading || !apiKey} /><button type="submit" disabled={isLoading || !userInput.trim() || !apiKey} className="p-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed flex-shrink-0"><Send size={18} /></button></form>{error && <p className="text-sm text-red-600 mt-2 text-center">{error}</p>}</div>
       </div>
     );
 };

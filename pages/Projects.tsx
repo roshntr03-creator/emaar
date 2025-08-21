@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { GoogleGenAI, Type } from "@google/genai";
@@ -10,6 +12,7 @@ import * as localApi from '../api';
 import * as firebaseApi from '../firebase/api';
 import { isFirebaseConfigured } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
+import { useApiKey } from '../contexts/ApiKeyContext';
 
 const getStatusChip = (status: 'active' | 'completed' | 'on_hold') => {
   switch (status) {
@@ -29,6 +32,7 @@ const Projects: React.FC = () => {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | Project['status']>('all');
   const { hasPermission } = useAuth();
+  const { apiKey } = useApiKey();
   
   const [isEstimationModalOpen, setIsEstimationModalOpen] = useState(false);
   const [isEstimating, setIsEstimating] = useState(false);
@@ -131,6 +135,10 @@ const Projects: React.FC = () => {
   
   // --- AI Estimation Handlers ---
   const openEstimationModal = () => {
+    if (!apiKey) {
+      alert("يرجى إعداد مفتاح Google AI API في صفحة الإعدادات لتفعيل هذه الميزة.");
+      return;
+    }
     setEstimationPrompt('');
     setEstimationResult(null);
     setEstimationError('');
@@ -143,6 +151,10 @@ const Projects: React.FC = () => {
     if (!estimationPrompt) {
       setEstimationError('الرجاء إدخال وصف للمشروع.');
       return;
+    }
+    if (!apiKey) {
+        setEstimationError('مفتاح API غير موجود. يرجى إعداده في الإعدادات.');
+        return;
     }
 
     setIsEstimating(true);
@@ -161,7 +173,7 @@ const Projects: React.FC = () => {
         durationInDays: Math.round((new Date(p.endDate).getTime() - new Date(p.startDate).getTime()) / (1000 * 60 * 60 * 24)),
       }));
 
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenAI({ apiKey });
       const prompt = `
         أنت خبير تقدير تكاليف في قطاع المقاولات بالمملكة العربية السعودية. مهمتك هي تحليل وصف المشروع التالي وتقديم تقدير تكلفة مفصل ومبني على البيانات التاريخية للمشاريع السابقة.
 
@@ -214,7 +226,7 @@ const Projects: React.FC = () => {
 
     } catch (e) {
       console.error("Error generating estimate:", e);
-      setEstimationError("عذرًا، حدث خطأ أثناء إنشاء التقدير. يرجى المحاولة مرة أخرى لاحقاً.");
+      setEstimationError("عذرًا، حدث خطأ أثناء إنشاء التقدير. تأكد من أن مفتاح API صحيح ونشط.");
     } finally {
       setIsEstimating(false);
     }
@@ -246,7 +258,8 @@ const Projects: React.FC = () => {
                 <>
                 <button 
                   onClick={openEstimationModal}
-                  className="flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">
+                  className="flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:bg-indigo-300"
+                  disabled={!apiKey}>
                     <BrainCircuit size={16} className="ml-2"/>
                     تقدير تكلفة (AI)
                 </button>
