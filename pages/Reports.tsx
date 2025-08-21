@@ -2,6 +2,8 @@
 
 
 
+
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import { BrainCircuit, Loader2, Send, User as UserIcon, Bot, KeyRound, BarChart2, AlertCircle, Printer, FileText, BarChart, PieChart } from 'lucide-react';
@@ -233,20 +235,32 @@ const BalanceSheetTab: React.FC<{ accounts: Account[], vouchers: JournalVoucher[
             const lines: ReportLine[] = [];
             const parentAccounts = accounts.filter(a => a.type === type && !a.parentId);
             let total = 0;
-            parentAccounts.forEach(parent => {
-                const addChildren = (acc: Account, level: number) => {
-                    const balance = (balances.get(acc.id) || 0) * (type === 'asset' ? 1 : -1);
-                    if (balance === 0 && !accounts.some(child => child.parentId === acc.id)) return;
-                    lines.push({ code: acc.code, name: acc.name, balance, level });
-                    let subTotal = balance;
-                    accounts.filter(a => a.parentId === acc.id).forEach(child => {
-                        subTotal += addChildren(child, level + 1);
-                    });
-                    if(acc.parentId) total += balance;
-                    return subTotal;
+
+            const addChildren = (acc: Account, level: number): number => {
+                const balance = (balances.get(acc.id) || 0) * (type === 'asset' ? 1 : -1);
+                if (balance === 0 && !accounts.some(child => child.parentId === acc.id)) {
+                    return 0;
                 }
+                lines.push({ code: acc.code, name: acc.name, balance, level });
+                let subTotal = balance;
+                accounts.filter(a => a.parentId === acc.id).forEach(child => {
+                    subTotal += addChildren(child, level + 1);
+                });
+                if (acc.parentId) {
+                    total += balance;
+                }
+                return subTotal;
+            };
+
+            parentAccounts.forEach(parent => {
                 addChildren(parent, 0);
             });
+
+            const totalAssets = lines.filter(l => l.level === 0).reduce((sum, l) => sum + l.balance, 0);
+            if (type === 'asset') {
+                total = totalAssets;
+            }
+            
             lines.push({ code: '', name: `إجمالي ${{'asset':'الأصول','liability':'الخصوم','equity':'حقوق الملكية'}[type]}`, balance: total, isTotal: true });
             return lines;
         }
