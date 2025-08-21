@@ -304,7 +304,7 @@ const JournalVouchers: React.FC = () => {
                   </td>
                 </tr>
               ) : filteredVouchers.length > 0 ? filteredVouchers.map((voucher) => {
-                const totals = voucher.lines.reduce((acc, line) => {
+                const totals = (voucher.lines || []).reduce((acc, line) => {
                     acc.debit += line.debit;
                     acc.credit += line.credit;
                     return acc;

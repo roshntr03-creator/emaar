@@ -28,7 +28,7 @@ const getStatusChip = (status: PurchaseOrder['status']) => {
 };
 
 const calculateTotal = (lines: PurchaseOrderLine[]) => {
-    return lines.reduce((total, line) => total + (line.quantity * line.unitPrice), 0);
+    return (lines || []).reduce((total, line) => total + (line.quantity * line.unitPrice), 0);
 }
 
 const PurchaseOrders: React.FC = () => {
