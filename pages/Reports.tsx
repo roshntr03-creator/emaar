@@ -231,46 +231,53 @@ const BalanceSheetTab: React.FC<{ accounts: Account[], vouchers: JournalVoucher[
     
     const data = useMemo(() => {
         const balances = calculateAccountBalances(accounts, vouchers, asOfDate);
+        
         const buildLines = (type: Account['type']): ReportLine[] => {
             const lines: ReportLine[] = [];
             const parentAccounts = accounts.filter(a => a.type === type && !a.parentId);
-            let total = 0;
 
-            const addChildren = (acc: Account, level: number): number => {
+            const addAccountAndChildren = (acc: Account, level: number) => {
                 const balance = (balances.get(acc.id) || 0) * (type === 'asset' ? 1 : -1);
-                if (balance === 0 && !accounts.some(child => child.parentId === acc.id)) {
-                    return 0;
+                const children = accounts.filter(child => child.parentId === acc.id);
+                
+                // Optimization: Don't show accounts with 0 balance and no children
+                if (balance === 0 && children.length === 0) {
+                    return;
                 }
+                
                 lines.push({ code: acc.code, name: acc.name, balance, level });
-                let subTotal = balance;
-                accounts.filter(a => a.parentId === acc.id).forEach(child => {
-                    subTotal += addChildren(child, level + 1);
+                
+                children.sort((a,b) => a.code.localeCompare(b.code)).forEach(child => {
+                    addAccountAndChildren(child, level + 1);
                 });
-                if (acc.parentId) {
-                    total += balance;
-                }
-                return subTotal;
             };
-
-            parentAccounts.forEach(parent => {
-                addChildren(parent, 0);
-            });
-
-            const totalAssets = lines.filter(l => l.level === 0).reduce((sum, l) => sum + l.balance, 0);
-            if (type === 'asset') {
-                total = totalAssets;
-            }
             
-            lines.push({ code: '', name: `إجمالي ${{'asset':'الأصول','liability':'الخصوم','equity':'حقوق الملكية'}[type]}`, balance: total, isTotal: true });
+            parentAccounts.sort((a,b) => a.code.localeCompare(b.code)).forEach(parent => addAccountAndChildren(parent, 0));
+
+            const categoryTotal = accounts
+                .filter(a => a.type === type)
+                .reduce((sum, acc) => {
+                    const balance = (balances.get(acc.id) || 0) * (type === 'asset' ? 1 : -1);
+                    return sum + balance;
+                }, 0);
+            
+            lines.push({ 
+                code: '', 
+                name: `إجمالي ${{'asset':'الأصول','liability':'الخصوم','equity':'حقوق الملكية'}[type]}`, 
+                balance: categoryTotal, 
+                isTotal: true 
+            });
             return lines;
-        }
+        };
 
         const assets = buildLines('asset');
         const liabilities = buildLines('liability');
         const equity = buildLines('equity');
-        const totalAssets = assets[assets.length-1].balance;
-        const totalLiabilities = liabilities[liabilities.length-1].balance;
-        const totalEquity = equity[equity.length-1].balance;
+
+        const totalAssets = assets.length > 0 ? assets[assets.length-1].balance : 0;
+        const totalLiabilities = liabilities.length > 0 ? liabilities[liabilities.length-1].balance : 0;
+        const totalEquity = equity.length > 0 ? equity[equity.length-1].balance : 0;
+
         const totalLiabilitiesAndEquity = totalLiabilities + totalEquity;
         
         return { assets, liabilities, equity, totalAssets, totalLiabilitiesAndEquity };
