@@ -183,8 +183,8 @@ const SupplierBills: React.FC = () => {
 
   const filteredBills = useMemo(() =>
     bills.filter(bill =>
-      (bill.supplierName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      bill.projectName.toLowerCase().includes(searchQuery.toLowerCase())) &&
+      (((bill.supplierName || '').toLowerCase().includes(searchQuery.toLowerCase())) ||
+      ((bill.projectName || '').toLowerCase().includes(searchQuery.toLowerCase()))) &&
       (statusFilter === 'all' || bill.status === statusFilter)
     ), [bills, searchQuery, statusFilter]);
 

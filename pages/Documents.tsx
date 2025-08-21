@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import type { Document, Project, Client, Supplier, LinkedEntity, LinkedEntityType } from '../types';
 import { PlusCircle, Search, Edit, Trash2, Filter, Loader2, Paperclip, File, Download, Link as LinkIcon, X } from 'lucide-react';
@@ -148,9 +149,9 @@ const Documents: React.FC = () => {
 
     const filteredDocs = useMemo(() =>
         documents.filter(doc =>
-            doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            doc.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            doc.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+            (doc.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (doc.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (doc.tags || []).some(tag => (tag || '').toLowerCase().includes(searchQuery.toLowerCase()))
         ), [documents, searchQuery]);
     
     return (
