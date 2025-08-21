@@ -154,6 +154,7 @@ const JournalVouchers: React.FC = () => {
             setVouchers(vouchers.filter(v => v.id !== voucherId));
         } catch (error) {
             console.error("Failed to delete journal voucher", error);
+            alert(error instanceof Error ? error.message : String(error));
         }
     }
   };

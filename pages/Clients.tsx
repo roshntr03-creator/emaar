@@ -82,6 +82,7 @@ const Clients: React.FC = () => {
         setClients(clients.filter(c => c.id !== clientId));
       } catch (error) {
         console.error("Failed to delete client", error);
+        alert(error instanceof Error ? error.message : String(error));
       }
     }
   };

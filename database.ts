@@ -346,8 +346,27 @@ class Database {
   // --- Clients ---
   getClients = () => this._getAll('clients');
   addClient = (data: Omit<Client, 'id'>) => this._add('clients', data, 'CUST');
-  updateClient = (data: Client) => this._update('clients', data);
-  deleteClient = (id: string) => this._delete('clients', id);
+  updateClient = (data: Client) => {
+    const oldClient = this._data.clients.find(c => c.id === data.id);
+    if (oldClient && oldClient.name !== data.name) {
+      this._data.projects.forEach(p => {
+        if (p.client === oldClient.name) {
+          p.client = data.name;
+        }
+      });
+    }
+    return this._update('clients', data);
+  };
+  deleteClient = (id: string) => {
+    const clientToDelete = this._data.clients.find(c => c.id === id);
+    if (clientToDelete) {
+        const associatedProjects = this._data.projects.filter(p => p.client === clientToDelete.name);
+        if (associatedProjects.length > 0) {
+            throw new Error(`لا يمكن حذف العميل "${clientToDelete.name}" لوجود مشاريع مرتبطة به.`);
+        }
+    }
+    this._delete('clients', id);
+  };
 
   // --- Suppliers ---
   getSuppliers = () => this._getAll('suppliers');
@@ -391,7 +410,17 @@ class Database {
   getJournalVouchers = () => this._getAll('journalVouchers');
   addJournalVoucher = (data: Omit<JournalVoucher, 'id'>) => this._add('journalVouchers', data, 'JV', { useYear: true });
   updateJournalVoucher = (data: JournalVoucher) => this._update('journalVouchers', data);
-  deleteJournalVoucher = (id: string) => this._delete('journalVouchers', id);
+  deleteJournalVoucher = (id: string) => {
+    const linkedPO = this._data.purchaseOrders.find(po => po.journalVoucherId === id);
+    if (linkedPO) {
+        throw new Error(`لا يمكن حذف القيد لارتباطه بأمر الشراء ${linkedPO.id}.`);
+    }
+    const linkedPayroll = this._data.payrollRuns.find(pr => pr.journalVoucherId === id);
+    if (linkedPayroll) {
+        throw new Error(`لا يمكن حذف القيد لارتباطه بمسير رواتب ${linkedPayroll.id}.`);
+    }
+    this._delete('journalVouchers', id);
+  };
   
   // --- Purchase Orders ---
   getPurchaseOrders = () => this._getAll('purchaseOrders');

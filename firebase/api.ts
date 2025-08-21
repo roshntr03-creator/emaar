@@ -118,8 +118,37 @@ export const getProjectFinancialTransactions = async (projectId: string): Promis
 // --- Clients ---
 export const getClients = (): Promise<Client[]> => getCollectionData('clients');
 export const addClient = (data: Omit<Client, 'id'>): Promise<Client> => addDocumentData('clients', data);
-export const updateClient = (data: Client): Promise<Client> => updateDocumentData('clients', data);
-export const deleteClient = (id: string): Promise<void> => deleteDocumentData('clients', id);
+export const updateClient = async (data: Client): Promise<Client> => {
+    const firebaseServices = initializeFirebase();
+    if (!firebaseServices) throw new Error("Firebase not initialized");
+    const oldClient = await getDocumentData<Client>('clients', data.id);
+    if (oldClient && oldClient.name !== data.name) {
+        const projectsToUpdateQuery = firebaseServices.db.collection('projects').where('client', '==', oldClient.name);
+        const projectsSnapshot = await projectsToUpdateQuery.get();
+        if (!projectsSnapshot.empty) {
+            const batch = firebaseServices.db.batch();
+            projectsSnapshot.forEach(doc => {
+                batch.update(doc.ref, { client: data.name });
+            });
+            await batch.commit();
+        }
+    }
+    return updateDocumentData('clients', data);
+};
+export const deleteClient = async (id: string): Promise<void> => {
+    const firebaseServices = initializeFirebase();
+    if (!firebaseServices) throw new Error("Firebase not initialized");
+    
+    const clientToDelete = await getDocumentData<Client>('clients', id);
+    if (clientToDelete) {
+         const projectsWithClientQuery = firebaseServices.db.collection('projects').where('client', '==', clientToDelete.name).limit(1);
+        const projectsSnapshot = await projectsWithClientQuery.get();
+        if (!projectsSnapshot.empty) {
+            throw new Error(`لا يمكن حذف العميل "${clientToDelete.name}" لوجود مشاريع مرتبطة به.`);
+        }
+    }
+    return deleteDocumentData('clients', id);
+};
 
 // --- Suppliers ---
 export const getSuppliers = (): Promise<Supplier[]> => getCollectionData('suppliers');
@@ -166,7 +195,26 @@ export const deleteAccount = async (id: string): Promise<void> => {
 export const getJournalVouchers = (): Promise<JournalVoucher[]> => getCollectionData('journalVouchers');
 export const addJournalVoucher = (data: Omit<JournalVoucher, 'id'>): Promise<JournalVoucher> => addDocumentData('journalVouchers', data);
 export const updateJournalVoucher = (data: JournalVoucher): Promise<JournalVoucher> => updateDocumentData('journalVouchers', data);
-export const deleteJournalVoucher = (id: string): Promise<void> => deleteDocumentData('journalVouchers', id);
+export const deleteJournalVoucher = async (id: string): Promise<void> => {
+    const firebaseServices = initializeFirebase();
+    if (!firebaseServices) throw new Error("Firebase not initialized");
+    
+    const poQuery = firebaseServices.db.collection('purchaseOrders').where('journalVoucherId', '==', id).limit(1);
+    const poSnapshot = await poQuery.get();
+    if (!poSnapshot.empty) {
+        const poId = poSnapshot.docs[0].id;
+        throw new Error(`لا يمكن حذف القيد لارتباطه بأمر الشراء ${poId}.`);
+    }
+
+    const payrollQuery = firebaseServices.db.collection('payrollRuns').where('journalVoucherId', '==', id).limit(1);
+    const payrollSnapshot = await payrollQuery.get();
+    if (!payrollSnapshot.empty) {
+        const payrollId = payrollSnapshot.docs[0].id;
+        throw new Error(`لا يمكن حذف القيد لارتباطه بمسير رواتب ${payrollId}.`);
+    }
+
+    return deleteDocumentData('journalVouchers', id);
+};
 
 // --- Purchase Orders ---
 export const getPurchaseOrders = (): Promise<PurchaseOrder[]> => getCollectionData('purchaseOrders');

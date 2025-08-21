@@ -10,9 +10,17 @@ const LATENCY = 300; // ms
 
 const simulateNetwork = <T>(data: T): Promise<T> => {
   return new Promise(resolve => {
-    // A deep copy to prevent mutations affecting the original 'db' object before it's "saved"
-    const deepCopiedData = JSON.parse(JSON.stringify(data));
-    setTimeout(() => resolve(deepCopiedData), LATENCY);
+    setTimeout(() => {
+      // A deep copy to prevent mutations affecting the original 'db' object before it's "saved"
+      // JSON.stringify will return 'undefined' for an undefined value which will cause JSON.parse to fail.
+      // We handle that case explicitly.
+      if (typeof data === 'undefined') {
+          resolve(data);
+          return;
+      }
+      const deepCopiedData = JSON.parse(JSON.stringify(data));
+      resolve(deepCopiedData);
+    }, LATENCY);
   });
 };
 
