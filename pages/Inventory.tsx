@@ -95,7 +95,7 @@ const Inventory: React.FC = () => {
   );
   
   const totalInventoryValue = useMemo(() => 
-    inventory.reduce((total, item) => total + (item.quantity * item.averageCost), 0),
+    inventory.reduce((total, item) => total + ((item.quantity ?? 0) * (item.averageCost ?? 0)), 0),
   [inventory]);
 
   const canEdit = hasPermission('inventory', 'edit');
@@ -169,10 +169,10 @@ const Inventory: React.FC = () => {
                   <td className="py-3 px-4 border-b font-mono text-blue-600">{item.id}</td>
                   <td className="py-3 px-4 border-b">{item.name}</td>
                   <td className="py-3 px-4 border-b">{item.category}</td>
-                  <td className="py-3 px-4 border-b font-medium text-center">{item.quantity.toLocaleString()}</td>
+                  <td className="py-3 px-4 border-b font-medium text-center">{(item.quantity ?? 0).toLocaleString()}</td>
                   <td className="py-3 px-4 border-b text-center">{item.unit}</td>
-                  <td className="py-3 px-4 border-b">﷼{item.averageCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                  <td className="py-3 px-4 border-b font-semibold">﷼{(item.quantity * item.averageCost).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                  <td className="py-3 px-4 border-b">﷼{(item.averageCost ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                  <td className="py-3 px-4 border-b font-semibold">﷼{((item.quantity ?? 0) * (item.averageCost ?? 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                   {showActionsColumn &&
                     <td className="py-3 px-4 border-b">
                       <div className="flex justify-center items-center space-x-2 space-x-reverse">
