@@ -210,15 +210,15 @@ const Custody: React.FC = () => {
                   </td>
                 </tr>
               ) : filteredCustodies.length > 0 ? filteredCustodies.map((custody) => {
-                const remaining = custody.amount - custody.settledAmount;
+                const remaining = (custody.amount || 0) - (custody.settledAmount || 0);
                 return (
                   <tr key={custody.id} className="hover:bg-gray-50">
                     <td className="py-3 px-4 border-b font-mono text-blue-600">{custody.id}</td>
                     <td className="py-3 px-4 border-b">{custody.employeeName}</td>
                     <td className="py-3 px-4 border-b">{custody.date}</td>
                     <td className="py-3 px-4 border-b">{custody.projectName || '-'}</td>
-                    <td className="py-3 px-4 border-b">﷼{custody.amount.toLocaleString()}</td>
-                    <td className="py-3 px-4 border-b">﷼{custody.settledAmount.toLocaleString()}</td>
+                    <td className="py-3 px-4 border-b">﷼{custody.amount?.toLocaleString() ?? '0'}</td>
+                    <td className="py-3 px-4 border-b">﷼{custody.settledAmount?.toLocaleString() ?? '0'}</td>
                     <td className="py-3 px-4 border-b font-bold">{remaining > 0 ? `﷼${remaining.toLocaleString()}`: '-'}</td>
                     <td className="py-3 px-4 border-b">{getStatusChip(custody.status)}</td>
                     <td className="py-3 px-4 border-b">
