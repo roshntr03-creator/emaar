@@ -107,8 +107,8 @@ const Documents: React.FC = () => {
             title: doc.title,
             description: doc.description,
             category: doc.category,
-            tags: doc.tags,
-            linkedEntities: doc.linkedEntities
+            tags: doc.tags || [],
+            linkedEntities: doc.linkedEntities || []
         });
         setSelectedFile(null);
         setIsModalOpen(true);
@@ -194,7 +194,7 @@ const Documents: React.FC = () => {
                                     <td className="py-3 px-4 border-b"><span className="px-2 py-1 text-xs bg-gray-100 rounded-full">{doc.category}</span></td>
                                     <td className="py-3 px-4 border-b">
                                         <div className="flex flex-wrap gap-1">
-                                            {doc.linkedEntities.map(e => <span key={`${e.type}-${e.id}`} className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">{entityTypeMap[e.type]}: {e.name}</span>)}
+                                            {(doc.linkedEntities || []).map(e => <span key={`${e.type}-${e.id}`} className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">{entityTypeMap[e.type]}: {e.name}</span>)}
                                         </div>
                                     </td>
                                     <td className="py-3 px-4 border-b text-sm">{doc.fileName} ({formatFileSize(doc.fileSize)})</td>
@@ -228,7 +228,7 @@ const Documents: React.FC = () => {
                              <select name="category" value={formData.category} onChange={handleInputChange} className="w-full px-3 py-2 border bg-white rounded-md">
                                 <option>عقد</option><option>فاتورة</option><option>مخطط هندسي</option><option>خطاب رسمي</option><option>صورة</option><option>آخر</option>
                             </select>
-                             <input type="text" name="tags" value={formData.tags.join(', ')} onChange={handleTagsChange} placeholder="وسوم (مفصولة بفاصلة)" className="w-full px-3 py-2 border rounded-md" />
+                             <input type="text" name="tags" value={(formData.tags || []).join(', ')} onChange={handleTagsChange} placeholder="وسوم (مفصولة بفاصلة)" className="w-full px-3 py-2 border rounded-md" />
                         </div>
                         
                         <div className="border-t pt-4">
@@ -245,7 +245,7 @@ const Documents: React.FC = () => {
                                 ))}
                             </div>
                             <div className="flex flex-wrap gap-2 mt-2">
-                                {formData.linkedEntities.map(e => (
+                                {(formData.linkedEntities || []).map(e => (
                                     <span key={`${e.type}-${e.id}`} className="flex items-center text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
                                         {entityTypeMap[e.type]}: {e.name}
                                         <button type="button" onClick={() => removeLinkedEntity(e)} className="mr-2 text-blue-600 hover:text-blue-800"><X size={12} /></button>

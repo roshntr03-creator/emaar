@@ -60,33 +60,61 @@ const seedData: DbData = {
     { id: '1111', code: '1111', name: 'النقدية بالصندوق', type: 'asset', parentId: '111' },
     { id: '1112', code: '1112', name: 'النقدية بالبنوك', type: 'asset', parentId: '111' },
     { id: '112', code: '112', name: 'المخزون', type: 'asset', parentId: '11' },
+    { id: '113', code: '113', name: 'العملاء - ذمم مدينة', type: 'asset', parentId: '11' },
     { id: '2', code: '2', name: 'الخصوم', type: 'liability', parentId: null },
     { id: '21', code: '21', name: 'الخصوم المتداولة', type: 'liability', parentId: '2' },
     { id: '211', code: '211', name: 'الموردون - ذمم دائنة', type: 'liability', parentId: '21' },
     { id: '213', code: '213', name: 'رواتب مستحقة', type: 'liability', parentId: '21' },
     { id: '214', code: '214', name: 'استقطاعات مستحقة', type: 'liability', parentId: '21' },
     { id: '3', code: '3', name: 'حقوق الملكية', type: 'equity', parentId: null },
+    { id: '31', code: '31', name: 'رأس المال', type: 'equity', parentId: '3' },
     { id: '4', code: '4', name: 'الإيرادات', type: 'revenue', parentId: null },
     { id: '5', code: '5', name: 'المصروفات', type: 'expense', parentId: null },
     { id: '51', code: '51', name: 'مصروفات تشغيلية', type: 'expense', parentId: '5' },
     { id: '511', code: '511', name: 'مصروف الرواتب والأجور', type: 'expense', parentId: '51' },
     { id: '512', code: '512', name: 'تكاليف المشاريع', type: 'expense', parentId: '51' },
     { id: '5121', code: '5121', name: 'تكلفة المواد المنصرفة', type: 'expense', parentId: '512' },
+    { id: '52', code: '52', name: 'مصروفات عمومية وإدارية', type: 'expense', parentId: '5' },
+    { id: '521', code: '521', name: 'مصروف كهرباء', type: 'expense', parentId: '52' },
   ],
-  journalVouchers: [],
-  purchaseOrders: [],
-  inventory: [],
+  journalVouchers: [
+    { id: 'JV-2024-001', date: '2024-01-05', description: 'إثبات رأس المال عند تأسيس الشركة', lines: [ { accountId: '1112', description: 'إيداع بنكي', debit: 2000000, credit: 0 }, { accountId: '31', description: 'رأس المال', debit: 0, credit: 2000000 } ], status: 'posted' }
+  ],
+  purchaseOrders: [
+    { id: 'PO-2024-001', supplierName: 'مصنع حديد الراجحي', projectName: 'بناء برج الرياض', date: '2024-06-10', lines: [{ description: 'حديد تسليح 16مم', quantity: 10, unitPrice: 2750 }], status: 'approved', journalVoucherId: null },
+    { id: 'PO-2024-002', supplierName: 'مصنع حديد الراجحي', projectName: 'صيانة مول النخيل', date: '2024-07-01', lines: [{ description: 'أسمنت مقاوم', quantity: 200, unitPrice: 14.5 }, { description: 'بلوك أسمنتي 20سم', quantity: 1000, unitPrice: 2.4 }], status: 'draft', journalVoucherId: null }
+  ],
+  inventory: [
+    { id: 'MAT-001', name: 'أسمنت مقاوم', category: 'مواد أساسية', quantity: 500, unit: 'كيس', averageCost: 15 },
+    { id: 'MAT-002', name: 'حديد تسليح 16مم', category: 'حديد', quantity: 20, unit: 'طن', averageCost: 2800 },
+    { id: 'MAT-003', name: 'بلوك أسمنتي 20سم', category: 'بلوك', quantity: 2500, unit: 'حبة', averageCost: 2.5 }
+  ],
   users: [
       { id: 'USR-001', name: 'أحمد محمود', email: 'admin@company.com', role: 'admin', status: 'active', avatarUrl: 'https://i.pravatar.cc/150?u=USR-001' },
       { id: 'USR-002', name: 'فاطمة الزهراء', email: 'accountant@company.com', role: 'accountant', status: 'active', avatarUrl: 'https://i.pravatar.cc/150?u=USR-002' },
       { id: 'USR-003', name: 'علي حسن', email: 'pm@company.com', role: 'project_manager', status: 'active', avatarUrl: 'https://i.pravatar.cc/150?u=USR-003' },
       { id: 'USR-004', name: 'سارة عبدالله', email: 'viewer@company.com', role: 'viewer', status: 'inactive', avatarUrl: 'https://i.pravatar.cc/150?u=USR-004' }
   ],
-  employees: [],
-  payrollRuns: [],
-  vouchers: [],
-  changeOrders: [],
-  custodies: [],
+  employees: [
+    { id: 'EMP-001', name: 'سالم الغامدي', jobTitle: 'مهندس موقع', department: 'الهندسة', salary: 12000, hireDate: '2022-05-20', phone: '0551234567', email: 'salem@company.com', status: 'active' },
+    { id: 'EMP-002', name: 'نورة الشهري', jobTitle: 'محاسبة مشاريع', department: 'المالية', salary: 9500, hireDate: '2023-01-10', phone: '0557654321', email: 'noura@company.com', status: 'active' },
+    { id: 'EMP-003', name: 'يوسف التركي', jobTitle: 'مدير مشتريات', department: 'المشتريات', salary: 15000, hireDate: '2021-11-01', phone: '0531237890', email: 'yousef@company.com', status: 'on_leave' }
+  ],
+  payrollRuns: [
+    { id: 'PAY-2024-06', period: 'يونيو 2024', payDate: '2024-06-28', status: 'draft', slips: [ { employeeId: 'EMP-001', employeeName: 'سالم الغامدي', basicSalary: 12000, allowances: 1500, deductions: 500, netPay: 13000 }, { employeeId: 'EMP-002', employeeName: 'نورة الشهري', basicSalary: 9500, allowances: 500, deductions: 250, netPay: 9750 } ], journalVoucherId: null }
+  ],
+  vouchers: [
+    { id: 'PV-2024-001', type: 'payment', date: '2024-06-05', person: 'شركة الكهرباء السعودية', description: 'سداد فاتورة كهرباء للمكتب الرئيسي', amount: 4500, paymentMethod: 'bank_transfer', cashBankAccount: '1112', correspondingAccount: '521', status: 'approved' },
+    { id: 'RV-2024-001', type: 'receipt', date: '2024-06-20', person: 'عبدالله السليمان', description: 'دفعة تحت الحساب لمشروع فلل الياسمين', amount: 100000, paymentMethod: 'cheque', cashBankAccount: '1112', correspondingAccount: '4', status: 'approved', relatedInvoiceId: 'INV-2023-001' }
+  ],
+  changeOrders: [
+    { id: 'CO-001', projectName: 'بناء برج الرياض', date: '2024-05-20', description: 'إضافة دور مواقف إضافي تحت الأرض', amount: 1250000, status: 'approved' },
+    { id: 'CO-002', projectName: 'بناء برج الرياض', date: '2024-06-15', description: 'تغيير نوع الرخام للواجهات الرئيسية', amount: -150000, status: 'pending' }
+  ],
+  custodies: [
+    { id: 'CUST-001', employeeId: 'EMP-001', employeeName: 'سالم الغامدي', projectId: 'PROJ-001', projectName: 'بناء برج الرياض', date: '2024-06-01', description: 'عهدة لشراء مواد بناء صغيرة وعاجلة', amount: 5000, settledAmount: 3500, status: 'open' },
+    { id: 'CUST-002', employeeId: 'EMP-002', employeeName: 'نورة الشهري', projectId: null, projectName: null, date: '2024-05-10', description: 'عهدة لتغطية مصاريف سفر لحضور مؤتمر', amount: 7000, settledAmount: 7000, status: 'closed' }
+  ],
   budgetLines: [
     { id: 'BL-001', projectId: 'PROJ-001', category: 'مواد بناء', budgetItem: 'حديد تسليح', budgetAmount: 1000000, actualAmount: 850000 },
     { id: 'BL-002', projectId: 'PROJ-001', category: 'مواد بناء', budgetItem: 'خرسانة جاهزة', budgetAmount: 1500000, actualAmount: 1600000 },
@@ -119,7 +147,10 @@ const seedData: DbData = {
     { id: 'ASSET-002', assetCode: 'VEH-001', name: 'شاحنة مرسيدس أكتروس', category: 'مركبات', purchaseDate: '2021-03-10', purchaseCost: 650000, currentValue: 500000, status: 'available', assignedProjectName: null, lastMaintenanceDate: '2024-06-01', nextMaintenanceDate: '2024-12-01'},
     { id: 'ASSET-003', assetCode: 'EQ-002', name: 'رافعة برجية Liebherr', category: 'معدات ثقيلة', purchaseDate: '2023-01-20', purchaseCost: 1200000, currentValue: 1100000, status: 'under_maintenance', assignedProjectName: 'بناء برج الرياض', lastMaintenanceDate: '2024-07-15', nextMaintenanceDate: '2025-01-15'},
   ],
-  documents: [],
+  documents: [
+    { id: 'DOC-001', title: 'عقد مشروع برج الرياض', description: 'العقد الأصلي الموقع مع شركة المملكة القابضة', category: 'عقد', tags: ['عقد رئيسي', 'برج الرياض'], linkedEntities: [{ type: 'project', id: 'PROJ-001', name: 'بناء برج الرياض' }, { type: 'client', id: 'CUST-001', name: 'شركة المملكة القابضة' }], fileName: 'riyadh-tower-contract.pdf', fileType: 'application/pdf', fileSize: 1234567, url: '#', uploadedAt: '2023-01-10T10:00:00Z' },
+    { id: 'DOC-002', title: 'مخطط الواجهات المعمارية', description: 'المخططات المعتمدة للواجهات من الاستشاري', category: 'مخطط هندسي', tags: ['معماري', 'واجهات', 'PROJ-001'], linkedEntities: [{ type: 'project', id: 'PROJ-001', name: 'بناء برج الرياض' }], fileName: 'facade-drawings.dwg', fileType: 'image/vnd.dwg', fileSize: 5678901, url: '#', uploadedAt: '2023-02-22T14:30:00Z' }
+  ],
   settings: {
     companyName: 'شركة المقاولات الحديثة',
     companyAddress: '1234 طريق الملك فهد، الرياض، المملكة العربية السعودية',
