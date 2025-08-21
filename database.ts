@@ -38,19 +38,26 @@ const seedData: DbData = {
     { id: 'PROJ-001', name: 'بناء برج الرياض', client: 'شركة المملكة القابضة', budget: 5000000, spent: 2500000, status: 'active', startDate: '2023-01-15', endDate: '2025-01-15' },
     { id: 'PROJ-002', name: 'تشطيب فلل الياسمين', client: 'عبدالله السليمان', budget: 1200000, spent: 1250000, status: 'completed', startDate: '2022-06-01', endDate: '2023-05-30' },
     { id: 'PROJ-003', name: 'صيانة مول النخيل', client: 'مجموعة العثيم', budget: 750000, spent: 150000, status: 'on_hold', startDate: '2023-09-01', endDate: '2024-03-01' },
+    { id: 'PROJ-004', name: 'مركز النور التجاري', client: 'شركة إعمار العقارية', budget: 12000000, spent: 4500000, status: 'active', startDate: '2023-03-01', endDate: '2025-08-31' },
+    { id: 'PROJ-005', name: 'تجديد فندق الواحة', client: 'مجموعة فنادق عالمية', budget: 2500000, spent: 0, status: 'active', startDate: '2024-07-01', endDate: '2025-02-28' },
   ],
   clients: [
     { id: 'CUST-001', name: 'شركة المملكة القابضة', contactPerson: 'خالد العامر', email: 'k.amer@kingdom.sa', phone: '920012345', activeProjects: 1 },
     { id: 'CUST-002', name: 'عبدالله السليمان', contactPerson: 'عبدالله السليمان', email: 'a.sulaiman@example.com', phone: '0501234567', activeProjects: 0 },
     { id: 'CUST-003', name: 'مجموعة العثيم', contactPerson: 'سارة الحسن', email: 's.hassan@othaim.com', phone: '920054321', activeProjects: 1 },
+    { id: 'CUST-004', name: 'شركة إعمار العقارية', contactPerson: 'فيصل الغامدي', email: 'f.ghamdi@emaar.com', phone: '0126543210', activeProjects: 1 },
+    { id: 'CUST-005', name: 'مجموعة فنادق عالمية', contactPerson: 'جون سميث', email: 'j.smith@globalhotels.com', phone: '0112345678', activeProjects: 1 },
   ],
   suppliers: [
     { id: 'SUP-001', name: 'مصنع حديد الراجحي', contactPerson: 'محمد المصري', service: 'مواد بناء', email: 'sales@rajhisteel.com.sa', phone: '0114567890' },
     { id: 'SUP-002', name: 'شركة الكهرباء السعودية', contactPerson: 'قسم المشاريع', service: 'خدمات كهرباء', email: 'projects@se.com.sa', phone: '920001100' },
+    { id: 'SUP-003', name: 'شركة الخزف السعودي', contactPerson: 'فهد العتيبي', service: 'مواد تشطيب', email: 'sales@saudiceramics.com', phone: '0119876543' },
+    { id: 'SUP-004', name: 'مقاولات التكييف المتقدمة', contactPerson: 'علي الشمراني', service: 'مقاول باطن - تكييف', email: 'ali@ac-contracting.sa', phone: '0533219876' },
   ],
   invoices: [
     { id: 'INV-2024-001', project: 'بناء برج الرياض', clientName: 'شركة المملكة القابضة', amount: 500000, status: 'paid', issueDate: '2024-03-01', dueDate: '2024-03-31' },
     { id: 'INV-2024-002', project: 'بناء برج الرياض', clientName: 'شركة المملكة القابضة', amount: 750000, status: 'unpaid', issueDate: '2024-05-15', dueDate: '2024-06-15' },
+    { id: 'INV-2024-003', project: 'مركز النور التجاري', clientName: 'شركة إعمار العقارية', amount: 1200000, status: 'unpaid', issueDate: '2024-06-01', dueDate: '2024-07-01' },
     { id: 'INV-2023-001', project: 'تشطيب فلل الياسمين', clientName: 'عبدالله السليمان', amount: 200000, status: 'overdue', issueDate: '2023-04-01', dueDate: '2023-05-01' },
   ],
   accounts: [
@@ -61,33 +68,44 @@ const seedData: DbData = {
     { id: '1112', code: '1112', name: 'النقدية بالبنوك', type: 'asset', parentId: '111' },
     { id: '112', code: '112', name: 'المخزون', type: 'asset', parentId: '11' },
     { id: '113', code: '113', name: 'العملاء - ذمم مدينة', type: 'asset', parentId: '11' },
+    { id: '12', code: '12', name: 'الأصول الثابتة', type: 'asset', parentId: '1' },
+    { id: '121', code: '121', name: 'المعدات والآليات', type: 'asset', parentId: '12' },
+    { id: '122', code: '122', name: 'المركبات', type: 'asset', parentId: '12' },
     { id: '2', code: '2', name: 'الخصوم', type: 'liability', parentId: null },
     { id: '21', code: '21', name: 'الخصوم المتداولة', type: 'liability', parentId: '2' },
     { id: '211', code: '211', name: 'الموردون - ذمم دائنة', type: 'liability', parentId: '21' },
+    { id: '212', code: '212', name: 'مقاولون من الباطن', type: 'liability', parentId: '21' },
     { id: '213', code: '213', name: 'رواتب مستحقة', type: 'liability', parentId: '21' },
     { id: '214', code: '214', name: 'استقطاعات مستحقة', type: 'liability', parentId: '21' },
     { id: '3', code: '3', name: 'حقوق الملكية', type: 'equity', parentId: null },
     { id: '31', code: '31', name: 'رأس المال', type: 'equity', parentId: '3' },
     { id: '4', code: '4', name: 'الإيرادات', type: 'revenue', parentId: null },
+    { id: '41', code: '41', name: 'إيرادات المشاريع', type: 'revenue', parentId: '4' },
     { id: '5', code: '5', name: 'المصروفات', type: 'expense', parentId: null },
-    { id: '51', code: '51', name: 'مصروفات تشغيلية', type: 'expense', parentId: '5' },
-    { id: '511', code: '511', name: 'مصروف الرواتب والأجور', type: 'expense', parentId: '51' },
-    { id: '512', code: '512', name: 'تكاليف المشاريع', type: 'expense', parentId: '51' },
-    { id: '5121', code: '5121', name: 'تكلفة المواد المنصرفة', type: 'expense', parentId: '512' },
+    { id: '51', code: '51', name: 'تكاليف المشاريع', type: 'expense', parentId: '5' },
+    { id: '511', code: '511', name: 'تكلفة المواد المنصرفة', type: 'expense', parentId: '51' },
+    { id: '512', code: '512', name: 'أجور عمال المشاريع', type: 'expense', parentId: '51' },
+    { id: '513', code: '513', name: 'تكاليف مقاولي الباطن', type: 'expense', parentId: '51' },
     { id: '52', code: '52', name: 'مصروفات عمومية وإدارية', type: 'expense', parentId: '5' },
-    { id: '521', code: '521', name: 'مصروف كهرباء', type: 'expense', parentId: '52' },
+    { id: '521', code: '521', name: 'مصروف الرواتب الإدارية', type: 'expense', parentId: '52' },
+    { id: '522', code: '522', name: 'مصروف كهرباء ومياه', type: 'expense', parentId: '52' },
+    { id: '523', code: '523', name: 'مصروف وقود وصيانة مركبات', type: 'expense', parentId: '52' },
   ],
   journalVouchers: [
-    { id: 'JV-2024-001', date: '2024-01-05', description: 'إثبات رأس المال عند تأسيس الشركة', lines: [ { accountId: '1112', description: 'إيداع بنكي', debit: 2000000, credit: 0 }, { accountId: '31', description: 'رأس المال', debit: 0, credit: 2000000 } ], status: 'posted' }
+    { id: 'JV-2024-001', date: '2024-01-05', description: 'إثبات رأس المال عند تأسيس الشركة', lines: [ { accountId: '1112', description: 'إيداع بنكي', debit: 2000000, credit: 0 }, { accountId: '31', description: 'رأس المال', debit: 0, credit: 2000000 } ], status: 'posted' },
+    { id: 'JV-2024-002', date: '2024-06-28', description: 'قيد استحقاق رواتب يونيو 2024', lines: [ { accountId: '521', description: 'رواتب إدارية', debit: 24500, credit: 0 }, { accountId: '512', description: 'أجور عمال مشاريع', debit: 12000, credit: 0 }, { accountId: '214', description: 'استقطاعات', debit: 0, credit: 750 }, { accountId: '213', description: 'رواتب مستحقة', debit: 0, credit: 35750 } ], status: 'posted' }
   ],
   purchaseOrders: [
     { id: 'PO-2024-001', supplierName: 'مصنع حديد الراجحي', projectName: 'بناء برج الرياض', date: '2024-06-10', lines: [{ description: 'حديد تسليح 16مم', quantity: 10, unitPrice: 2750 }], status: 'approved', journalVoucherId: null },
-    { id: 'PO-2024-002', supplierName: 'مصنع حديد الراجحي', projectName: 'صيانة مول النخيل', date: '2024-07-01', lines: [{ description: 'أسمنت مقاوم', quantity: 200, unitPrice: 14.5 }, { description: 'بلوك أسمنتي 20سم', quantity: 1000, unitPrice: 2.4 }], status: 'draft', journalVoucherId: null }
+    { id: 'PO-2024-002', supplierName: 'شركة الخزف السعودي', projectName: 'مركز النور التجاري', date: '2024-07-01', lines: [{ description: 'أسمنت مقاوم', quantity: 200, unitPrice: 14.5 }, { description: 'بلوك أسمنتي 20سم', quantity: 1000, unitPrice: 2.4 }], status: 'draft', journalVoucherId: null },
+    { id: 'PO-2024-003', supplierName: 'مصنع حديد الراجحي', projectName: 'مركز النور التجاري', date: '2024-05-20', lines: [{ description: 'حديد تسليح 18مم', quantity: 50, unitPrice: 2800 }], status: 'completed', journalVoucherId: 'JV-2024-003' }
   ],
   inventory: [
     { id: 'MAT-001', name: 'أسمنت مقاوم', category: 'مواد أساسية', quantity: 500, unit: 'كيس', averageCost: 15 },
     { id: 'MAT-002', name: 'حديد تسليح 16مم', category: 'حديد', quantity: 20, unit: 'طن', averageCost: 2800 },
-    { id: 'MAT-003', name: 'بلوك أسمنتي 20سم', category: 'بلوك', quantity: 2500, unit: 'حبة', averageCost: 2.5 }
+    { id: 'MAT-003', name: 'بلوك أسمنتي 20سم', category: 'بلوك', quantity: 2500, unit: 'حبة', averageCost: 2.5 },
+    { id: 'MAT-004', name: 'سيراميك أرضيات', category: 'تشطيبات', quantity: 1000, unit: 'متر مربع', averageCost: 45 },
+    { id: 'MAT-005', name: 'كابلات كهربائية 16مم', category: 'كهرباء', quantity: 500, unit: 'متر', averageCost: 22 },
   ],
   users: [
       { id: 'USR-001', name: 'أحمد محمود', email: 'admin@company.com', role: 'admin', status: 'active', avatarUrl: 'https://i.pravatar.cc/150?u=USR-001' },
@@ -98,42 +116,51 @@ const seedData: DbData = {
   employees: [
     { id: 'EMP-001', name: 'سالم الغامدي', jobTitle: 'مهندس موقع', department: 'الهندسة', salary: 12000, hireDate: '2022-05-20', phone: '0551234567', email: 'salem@company.com', status: 'active' },
     { id: 'EMP-002', name: 'نورة الشهري', jobTitle: 'محاسبة مشاريع', department: 'المالية', salary: 9500, hireDate: '2023-01-10', phone: '0557654321', email: 'noura@company.com', status: 'active' },
-    { id: 'EMP-003', name: 'يوسف التركي', jobTitle: 'مدير مشتريات', department: 'المشتريات', salary: 15000, hireDate: '2021-11-01', phone: '0531237890', email: 'yousef@company.com', status: 'on_leave' }
+    { id: 'EMP-003', name: 'يوسف التركي', jobTitle: 'مدير مشتريات', department: 'المشتريات', salary: 15000, hireDate: '2021-11-01', phone: '0531237890', email: 'yousef@company.com', status: 'on_leave' },
+    { id: 'EMP-004', name: 'خالد المطيري', jobTitle: 'مدير مشروع', department: 'المشاريع', salary: 22000, hireDate: '2020-02-15', phone: '0509876543', email: 'khalid@company.com', status: 'active' },
   ],
   payrollRuns: [
-    { id: 'PAY-2024-06', period: 'يونيو 2024', payDate: '2024-06-28', status: 'draft', slips: [ { employeeId: 'EMP-001', employeeName: 'سالم الغامدي', basicSalary: 12000, allowances: 1500, deductions: 500, netPay: 13000 }, { employeeId: 'EMP-002', employeeName: 'نورة الشهري', basicSalary: 9500, allowances: 500, deductions: 250, netPay: 9750 } ], journalVoucherId: null }
+    { id: 'PAY-2024-05', period: 'مايو 2024', payDate: '2024-05-28', status: 'paid', slips: [ { employeeId: 'EMP-001', employeeName: 'سالم الغامدي', basicSalary: 12000, allowances: 1500, deductions: 500, netPay: 13000 }, { employeeId: 'EMP-002', employeeName: 'نورة الشهري', basicSalary: 9500, allowances: 500, deductions: 250, netPay: 9750 }, { employeeId: 'EMP-004', employeeName: 'خالد المطيري', basicSalary: 22000, allowances: 2500, deductions: 1000, netPay: 23500 } ], journalVoucherId: 'JV-2024-004' },
+    { id: 'PAY-2024-06', period: 'يونيو 2024', payDate: '2024-06-28', status: 'approved', slips: [ { employeeId: 'EMP-001', employeeName: 'سالم الغامدي', basicSalary: 12000, allowances: 1500, deductions: 500, netPay: 13000 }, { employeeId: 'EMP-002', employeeName: 'نورة الشهري', basicSalary: 9500, allowances: 500, deductions: 250, netPay: 9750 } ], journalVoucherId: 'JV-2024-002' }
   ],
   vouchers: [
-    { id: 'PV-2024-001', type: 'payment', date: '2024-06-05', person: 'شركة الكهرباء السعودية', description: 'سداد فاتورة كهرباء للمكتب الرئيسي', amount: 4500, paymentMethod: 'bank_transfer', cashBankAccount: '1112', correspondingAccount: '521', status: 'approved' },
-    { id: 'RV-2024-001', type: 'receipt', date: '2024-06-20', person: 'عبدالله السليمان', description: 'دفعة تحت الحساب لمشروع فلل الياسمين', amount: 100000, paymentMethod: 'cheque', cashBankAccount: '1112', correspondingAccount: '4', status: 'approved', relatedInvoiceId: 'INV-2023-001' }
+    { id: 'PV-2024-001', type: 'payment', date: '2024-06-05', person: 'شركة الكهرباء السعودية', description: 'سداد فاتورة كهرباء للمكتب الرئيسي', amount: 4500, paymentMethod: 'bank_transfer', cashBankAccount: '1112', correspondingAccount: '522', status: 'approved' },
+    { id: 'RV-2024-001', type: 'receipt', date: '2024-06-20', person: 'عبدالله السليمان', description: 'دفعة تحت الحساب لمشروع فلل الياسمين', amount: 100000, paymentMethod: 'cheque', cashBankAccount: '1112', correspondingAccount: '113', status: 'approved', relatedInvoiceId: 'INV-2023-001' },
+    { id: 'PV-2024-002', type: 'payment', date: '2024-07-02', person: 'شركة الخزف السعودي', description: 'دفعة مقدمة لأمر الشراء PO-2024-002', amount: 5000, paymentMethod: 'bank_transfer', cashBankAccount: '1112', correspondingAccount: '211', status: 'draft' }
   ],
   changeOrders: [
     { id: 'CO-001', projectName: 'بناء برج الرياض', date: '2024-05-20', description: 'إضافة دور مواقف إضافي تحت الأرض', amount: 1250000, status: 'approved' },
-    { id: 'CO-002', projectName: 'بناء برج الرياض', date: '2024-06-15', description: 'تغيير نوع الرخام للواجهات الرئيسية', amount: -150000, status: 'pending' }
+    { id: 'CO-002', projectName: 'مركز النور التجاري', date: '2024-06-15', description: 'تغيير نوع الرخام للواجهات الرئيسية', amount: -150000, status: 'pending' }
   ],
   custodies: [
     { id: 'CUST-001', employeeId: 'EMP-001', employeeName: 'سالم الغامدي', projectId: 'PROJ-001', projectName: 'بناء برج الرياض', date: '2024-06-01', description: 'عهدة لشراء مواد بناء صغيرة وعاجلة', amount: 5000, settledAmount: 3500, status: 'open' },
-    { id: 'CUST-002', employeeId: 'EMP-002', employeeName: 'نورة الشهري', projectId: null, projectName: null, date: '2024-05-10', description: 'عهدة لتغطية مصاريف سفر لحضور مؤتمر', amount: 7000, settledAmount: 7000, status: 'closed' }
+    { id: 'CUST-002', employeeId: 'EMP-002', employeeName: 'نورة الشهري', projectId: null, projectName: null, date: '2024-05-10', description: 'عهدة لتغطية مصاريف سفر لحضور مؤتمر', amount: 7000, settledAmount: 7000, status: 'closed' },
+    { id: 'CUST-003', employeeId: 'EMP-004', employeeName: 'خالد المطيري', projectId: 'PROJ-004', projectName: 'مركز النور التجاري', date: '2024-07-01', description: 'عهدة مصاريف نثرية للمشروع', amount: 10000, settledAmount: 0, status: 'open' },
   ],
   budgetLines: [
     { id: 'BL-001', projectId: 'PROJ-001', category: 'مواد بناء', budgetItem: 'حديد تسليح', budgetAmount: 1000000, actualAmount: 850000 },
     { id: 'BL-002', projectId: 'PROJ-001', category: 'مواد بناء', budgetItem: 'خرسانة جاهزة', budgetAmount: 1500000, actualAmount: 1600000 },
     { id: 'BL-003', projectId: 'PROJ-001', category: 'أجور العمال', budgetItem: 'رواتب العمال والفنيين', budgetAmount: 2000000, actualAmount: 50000 },
+    { id: 'BL-004', projectId: 'PROJ-004', category: 'مقاولين بالباطن', budgetItem: 'أعمال التكييف', budgetAmount: 1500000, actualAmount: 0 },
+    { id: 'BL-005', projectId: 'PROJ-004', category: 'مقاولين بالباطن', budgetItem: 'أعمال الكهرباء', budgetAmount: 1200000, actualAmount: 300000 },
   ],
   supplierBills: [
     { id: 'BILL-001', supplierName: 'مصنع حديد الراجحي', projectName: 'بناء برج الرياض', amount: 150000, status: 'paid', issueDate: '2024-02-10', dueDate: '2024-03-10'},
-    { id: 'BILL-002', supplierName: 'مصنع حديد الراجحي', projectName: 'بناء برج الرياض', amount: 200000, status: 'unpaid', issueDate: '2024-04-20', dueDate: '2024-05-20'},
+    { id: 'BILL-002', supplierName: 'شركة الخزف السعودي', projectName: 'تشطيب فلل الياسمين', amount: 85000, status: 'overdue', issueDate: '2023-03-15', dueDate: '2023-04-15'},
+    { id: 'BILL-003', supplierName: 'مقاولات التكييف المتقدمة', projectName: 'مركز النور التجاري', amount: 350000, status: 'unpaid', issueDate: '2024-06-25', dueDate: '2024-07-25'},
   ],
   tasks: [
     { id: 'TASK-001', projectId: 'PROJ-001', name: 'أعمال الحفر والأساسات', start: '2023-01-15', end: '2023-03-15', progress: 100, type: 'task' },
     { id: 'TASK-002', projectId: 'PROJ-001', name: 'بناء الهيكل الخرساني', start: '2023-03-16', end: '2023-09-30', progress: 75, type: 'task' },
     { id: 'TASK-003', projectId: 'PROJ-001', name: 'أعمال التشطيبات الخارجية', start: '2023-10-01', end: '2024-02-28', progress: 25, type: 'task' },
-    { id: 'TASK-004', projectId: 'PROJ-001', name: 'التشطيبات الداخلية', start: '2024-03-01', end: '2024-10-31', progress: 0, type: 'task' },
-    { id: 'TASK-005', projectId: 'PROJ-001', name: 'تسليم المشروع', start: '2025-01-15', end: '2025-01-15', progress: 0, type: 'milestone' },
+    { id: 'TASK-004', projectId: 'PROJ-004', name: 'مرحلة التصميم والترخيص', start: '2023-03-01', end: '2023-05-30', progress: 100, type: 'task' },
+    { id: 'TASK-005', projectId: 'PROJ-004', name: 'أعمال الهيكل الإنشائي', start: '2023-06-01', end: '2024-04-30', progress: 60, type: 'task' },
+    { id: 'TASK-006', projectId: 'PROJ-004', name: 'تسليم الهيكل الإنشائي', start: '2024-04-30', end: '2024-04-30', progress: 0, type: 'milestone' },
   ],
   subcontracts: [
     { id: 'SUB-001', projectId: 'PROJ-001', projectName: 'بناء برج الرياض', subcontractorId: 'SUP-001', subcontractorName: 'مصنع حديد الراجحي', scopeOfWork: 'توريد وتركيب كامل الهيكل الحديدي للمشروع.', contractAmount: 1200000, retentionPercentage: 5, status: 'active', date: '2023-02-20' },
     { id: 'SUB-002', projectId: 'PROJ-002', projectName: 'تشطيب فلل الياسمين', subcontractorId: 'SUP-002', subcontractorName: 'شركة الكهرباء السعودية', scopeOfWork: 'جميع أعمال التمديدات الكهربائية والإنارة الداخلية والخارجية.', contractAmount: 250000, retentionPercentage: 10, status: 'completed', date: '2022-07-10' },
+    { id: 'SUB-003', projectId: 'PROJ-004', projectName: 'مركز النور التجاري', subcontractorId: 'SUP-004', subcontractorName: 'مقاولات التكييف المتقدمة', scopeOfWork: 'توريد وتركيب نظام التكييف المركزي بالكامل.', contractAmount: 1500000, retentionPercentage: 5, status: 'draft', date: '2024-06-15' },
   ],
   subcontractorPayments: [
     { id: 'SP-001', subcontractId: 'SUB-001', paymentNumber: 1, date: '2023-05-15', workCompletedValue: 300000, retentionAmount: 15000, netPayment: 285000, status: 'paid' },
@@ -145,11 +172,13 @@ const seedData: DbData = {
   assets: [
     { id: 'ASSET-001', assetCode: 'EQ-001', name: 'حفارة كاتربيلر 320D', category: 'معدات ثقيلة', purchaseDate: '2022-08-15', purchaseCost: 450000, currentValue: 380000, status: 'in_use', assignedProjectName: 'بناء برج الرياض', lastMaintenanceDate: '2024-05-20', nextMaintenanceDate: '2024-11-20'},
     { id: 'ASSET-002', assetCode: 'VEH-001', name: 'شاحنة مرسيدس أكتروس', category: 'مركبات', purchaseDate: '2021-03-10', purchaseCost: 650000, currentValue: 500000, status: 'available', assignedProjectName: null, lastMaintenanceDate: '2024-06-01', nextMaintenanceDate: '2024-12-01'},
-    { id: 'ASSET-003', assetCode: 'EQ-002', name: 'رافعة برجية Liebherr', category: 'معدات ثقيلة', purchaseDate: '2023-01-20', purchaseCost: 1200000, currentValue: 1100000, status: 'under_maintenance', assignedProjectName: 'بناء برج الرياض', lastMaintenanceDate: '2024-07-15', nextMaintenanceDate: '2025-01-15'},
+    { id: 'ASSET-003', assetCode: 'EQ-002', name: 'رافعة برجية Liebherr', category: 'معدات ثقيلة', purchaseDate: '2023-01-20', purchaseCost: 1200000, currentValue: 1100000, status: 'under_maintenance', assignedProjectName: 'مركز النور التجاري', lastMaintenanceDate: '2024-07-15', nextMaintenanceDate: '2025-01-15'},
+    { id: 'ASSET-004', assetCode: 'VEH-002', name: 'تويوتا هايلكس', category: 'مركبات', purchaseDate: '2023-10-05', purchaseCost: 130000, currentValue: 120000, status: 'in_use', assignedProjectName: 'مركز النور التجاري', lastMaintenanceDate: null, nextMaintenanceDate: '2024-10-01'},
   ],
   documents: [
     { id: 'DOC-001', title: 'عقد مشروع برج الرياض', description: 'العقد الأصلي الموقع مع شركة المملكة القابضة', category: 'عقد', tags: ['عقد رئيسي', 'برج الرياض'], linkedEntities: [{ type: 'project', id: 'PROJ-001', name: 'بناء برج الرياض' }, { type: 'client', id: 'CUST-001', name: 'شركة المملكة القابضة' }], fileName: 'riyadh-tower-contract.pdf', fileType: 'application/pdf', fileSize: 1234567, url: '#', uploadedAt: '2023-01-10T10:00:00Z' },
-    { id: 'DOC-002', title: 'مخطط الواجهات المعمارية', description: 'المخططات المعتمدة للواجهات من الاستشاري', category: 'مخطط هندسي', tags: ['معماري', 'واجهات', 'PROJ-001'], linkedEntities: [{ type: 'project', id: 'PROJ-001', name: 'بناء برج الرياض' }], fileName: 'facade-drawings.dwg', fileType: 'image/vnd.dwg', fileSize: 5678901, url: '#', uploadedAt: '2023-02-22T14:30:00Z' }
+    { id: 'DOC-002', title: 'مخطط الواجهات المعمارية', description: 'المخططات المعتمدة للواجهات من الاستشاري', category: 'مخطط هندسي', tags: ['معماري', 'واجهات', 'PROJ-001'], linkedEntities: [{ type: 'project', id: 'PROJ-001', name: 'بناء برج الرياض' }], fileName: 'facade-drawings.dwg', fileType: 'image/vnd.dwg', fileSize: 5678901, url: '#', uploadedAt: '2023-02-22T14:30:00Z' },
+    { id: 'DOC-003', title: 'فاتورة مورد - الخزف السعودي', description: 'فاتورة شراء سيراميك لمشروع فلل الياسمين', category: 'فاتورة', tags: ['مشتريات', 'تشطيبات'], linkedEntities: [{ type: 'project', id: 'PROJ-002', name: 'تشطيب فلل الياسمين' }, { type: 'supplier', id: 'SUP-003', name: 'شركة الخزف السعودي' }], fileName: 'saudi-ceramics-bill.jpg', fileType: 'image/jpeg', fileSize: 876543, url: '#', uploadedAt: '2022-09-15T11:45:00Z' }
   ],
   settings: {
     companyName: 'شركة المقاولات الحديثة',
