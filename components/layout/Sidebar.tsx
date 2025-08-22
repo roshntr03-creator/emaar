@@ -1,9 +1,10 @@
 
+
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
     LayoutDashboard, Briefcase, Users, User, Building, FileText, ShoppingCart, Warehouse, Book, 
-    Contact, DollarSign, Repeat, HandCoins, Receipt, HeartPulse, Settings, FileSpreadsheet, ClipboardSignature, FileArchive, Truck, FolderArchive, Landmark
+    Contact, DollarSign, Repeat, HandCoins, Receipt, HeartPulse, Settings, FileSpreadsheet, ClipboardSignature, FileArchive, Truck, FolderArchive, Landmark, Database
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -59,6 +60,7 @@ const Sidebar: React.FC = () => {
     { to: '/reports', icon: <FileSpreadsheet size={20} />, label: 'التقارير', module: 'reports' },
     { to: '/users', icon: <User size={20} />, label: 'المستخدمون', module: 'users' },
     { to: '/diagnostics', icon: <HeartPulse size={20} />, label: 'التشخيص', module: 'diagnostics' },
+    { to: '/database-inspector', icon: <Database size={20} />, label: 'فاحص قاعدة البيانات', module: 'diagnostics' },
     { to: '/settings', icon: <Settings size={20} />, label: 'الإعدادات', module: 'settings' },
   ];
   

@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, matchPath } from 'react-router-dom';
 import { Search, Bell, LogOut } from 'lucide-react';
@@ -29,6 +30,7 @@ const pageTitles: { [key: string]: string } = {
   '/documents': 'مستودع المستندات',
   '/bank-reconciliation': 'التسوية البنكية',
   '/diagnostics': 'التشخيص',
+  '/database-inspector': 'فاحص قاعدة البيانات',
   '/settings': 'الإعدادات',
 };
 

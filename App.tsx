@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
@@ -31,6 +32,7 @@ import SubcontractDetail from './pages/SubcontractDetail';
 import Assets from './pages/Assets';
 import Documents from './pages/Documents';
 import BankReconciliation from './pages/BankReconciliation';
+import DatabaseInspector from './pages/DatabaseInspector';
 
 const App: React.FC = () => {
   return (
@@ -65,6 +67,7 @@ const App: React.FC = () => {
                 <Route path="/documents" element={<Documents />} />
                 <Route path="/bank-reconciliation" element={<BankReconciliation />} />
                 <Route path="/diagnostics" element={<Diagnostics />} />
+                <Route path="/database-inspector" element={<DatabaseInspector />} />
                 <Route path="/settings" element={<Settings />} />
               </Route>
             </Route>
