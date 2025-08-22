@@ -1,7 +1,8 @@
 
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
-import { Briefcase, Calendar, User, ArrowLeft, PlusCircle, Edit, Trash2, GanttChartSquare, Loader2, FileArchive, DollarSign } from 'lucide-react';
+import { Briefcase, Calendar, User, ArrowLeft, PlusCircle, Edit, Trash2, GanttChartSquare, Loader2, FileArchive, DollarSign, BarChart2 } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Gantt, ViewMode, Task } from 'gantt-task-react';
 import Card from '../components/ui/Card';
@@ -9,7 +10,9 @@ import Tabs from '../components/ui/Tabs';
 import Modal from '../components/ui/Modal';
 import AttachmentsManager from '../components/AttachmentsManager';
 import type { Project, BudgetLine, ProjectTask, ProjectFinancialTransaction } from '../types';
-import * as api from '../api';
+import * as localApi from '../api';
+import * as firebaseApi from '../api';
+import { isFirebaseConfigured } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
 
 
@@ -402,24 +405,32 @@ const ProjectDetail: React.FC = () => {
     const passedProject = location.state?.project as Project | undefined;
     const { hasPermission } = useAuth();
     
+    const usingFirebase = isFirebaseConfigured();
+    const api = usingFirebase ? firebaseApi : localApi;
+    
     // Data states
     const [project, setProject] = useState<Project | null>(passedProject || null);
     const [budgetLines, setBudgetLines] = useState<BudgetLine[]>([]);
     const [tasks, setTasks] = useState<ProjectTask[]>([]);
     const [financialTransactions, setFinancialTransactions] = useState<ProjectFinancialTransaction[]>([]);
 
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(!passedProject);
 
     useEffect(() => {
         const fetchData = async (projectId: string) => {
+            setIsLoading(true);
             try {
+                // If project data was NOT passed via state, fetch it.
+                // Otherwise, trust the passed data and only fetch related data.
+                const projectDataPromise = passedProject ? Promise.resolve(passedProject) : api.getProjectById(projectId);
+
                 const [
                     projectData,
                     budgetLinesData,
                     tasksData,
                     financialsData,
                 ] = await Promise.all([
-                    api.getProjectById(projectId),
+                    projectDataPromise,
                     api.getBudgetLinesForProject(projectId),
                     api.getTasksForProject(projectId),
                     api.getProjectFinancialTransactions(projectId),
@@ -447,7 +458,7 @@ const ProjectDetail: React.FC = () => {
             setIsLoading(false);
             setProject(null);
         }
-    }, [id]);
+    }, [id, api, passedProject]);
 
     // --- Budget Line Handlers ---
     const handleAddBudgetLine = async (data: Omit<BudgetLine, 'id' | 'projectId'>) => {

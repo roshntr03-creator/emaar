@@ -10,12 +10,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gantt-task-react@0.3.9/dist/index.css">
     <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Tajawal', 'sans-serif'],
-            },
+      // Tailwind config is kept in case the script is re-enabled.
+      if (typeof tailwind !== 'undefined') {
+        tailwind.config = {
+          theme: {
+            extend: {
+              fontFamily: {
+                sans: ['Tajawal', 'sans-serif'],
+              },
+            }
           }
         }
       }
@@ -32,6 +35,23 @@
       npm install --save-dev @types/react @types/react-dom
     -->
     <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: 'Tajawal', sans-serif;
+        background-color: #f3f4f6;
+        direction: rtl;
+      }
+      /* Basic styles to keep the app usable without Tailwind */
+      #root {
+        display: flex;
+        height: 100%;
+      }
+      /* Add more basic styles if needed to maintain layout structure */
+
       @media print {
         body * {
           visibility: hidden;

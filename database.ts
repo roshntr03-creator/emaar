@@ -93,7 +93,8 @@ const seedData: DbData = {
   ],
   journalVouchers: [
     { id: 'JV-2024-001', date: '2024-01-05', description: 'إثبات رأس المال عند تأسيس الشركة', lines: [ { accountId: '1112', description: 'إيداع بنكي', debit: 2000000, credit: 0 }, { accountId: '31', description: 'رأس المال', debit: 0, credit: 2000000 } ], status: 'posted' },
-    { id: 'JV-2024-002', date: '2024-06-28', description: 'قيد استحقاق رواتب يونيو 2024', lines: [ { accountId: '521', description: 'رواتب إدارية', debit: 24500, credit: 0 }, { accountId: '512', description: 'أجور عمال مشاريع', debit: 12000, credit: 0 }, { accountId: '214', description: 'استقطاعات', debit: 0, credit: 750 }, { accountId: '213', description: 'رواتب مستحقة', debit: 0, credit: 35750 } ], status: 'posted' }
+    { id: 'JV-2024-002', date: '2024-06-28', description: 'قيد استحقاق رواتب يونيو 2024', lines: [ { accountId: '521', description: 'رواتب إدارية', debit: 24500, credit: 0 }, { accountId: '512', description: 'أجور عمال مشاريع', debit: 12000, credit: 0 }, { accountId: '214', description: 'استقطاعات', debit: 0, credit: 750 }, { accountId: '213', description: 'رواتب مستحقة', debit: 0, credit: 35750 } ], status: 'posted' },
+    { id: 'JV-2024-003', date: '2024-05-20', description: 'استلام أصناف بموجب أمر الشراء PO-2024-003', lines: [ { accountId: '112', description: 'زيادة المخزون: حديد تسليح 18مم', debit: 140000, credit: 0 }, { accountId: '211', description: 'استحقاق للمورد: مصنع حديد الراجحي', debit: 0, credit: 140000 } ], status: 'posted' }
   ],
   purchaseOrders: [
     { id: 'PO-2024-001', supplierName: 'مصنع حديد الراجحي', projectName: 'بناء برج الرياض', date: '2024-06-10', lines: [{ description: 'حديد تسليح 16مم', quantity: 10, unitPrice: 2750 }], status: 'approved', journalVoucherId: null },

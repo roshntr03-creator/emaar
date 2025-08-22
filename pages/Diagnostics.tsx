@@ -1,7 +1,5 @@
 
 
-
-
 import React, { useState } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import { Server, ShieldCheck, CheckCircle, XCircle, AlertCircle, BrainCircuit, Loader2, CircleDot, KeyRound, Activity, Database, Link2 } from 'lucide-react';
@@ -84,8 +82,8 @@ const getChecksToRun = async (api: typeof localApi | typeof firebaseApi): Promis
             name: 'ربط المشاريع بالعملاء',
             category: 'اتساق البيانات',
             check: async () => {
-                const clientNames = new Set(clients.map(c => c.name));
-                const unlinked = projects.filter(p => !clientNames.has(p.client));
+                const clientNames = new Set(clients.map(c => c.name.trim()));
+                const unlinked = projects.filter(p => !clientNames.has(p.client.trim()));
                 if (unlinked.length > 0) {
                     return { pass: false, msg: `تم العثور على ${unlinked.length} مشاريع غير مرتبطة بعملاء صالحين.`, problematicItems: unlinked.map(p => p.name) };
                 }
