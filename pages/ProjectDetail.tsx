@@ -1,5 +1,6 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { Briefcase, Calendar, User, ArrowLeft, PlusCircle, Edit, Trash2, GanttChartSquare, Loader2, FileArchive, DollarSign } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Gantt, ViewMode, Task } from 'gantt-task-react';
@@ -397,18 +398,20 @@ const BudgetTabContent: React.FC<BudgetTabContentProps> = ({ lines, onAdd, onUpd
 
 const ProjectDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
-    const [isLoading, setIsLoading] = useState(true);
+    const location = useLocation();
+    const passedProject = location.state?.project as Project | undefined;
     const { hasPermission } = useAuth();
     
     // Data states
-    const [project, setProject] = useState<Project | null>(null);
+    const [project, setProject] = useState<Project | null>(passedProject || null);
     const [budgetLines, setBudgetLines] = useState<BudgetLine[]>([]);
     const [tasks, setTasks] = useState<ProjectTask[]>([]);
     const [financialTransactions, setFinancialTransactions] = useState<ProjectFinancialTransaction[]>([]);
 
+    const [isLoading, setIsLoading] = useState(true);
+
     useEffect(() => {
         const fetchData = async (projectId: string) => {
-            setIsLoading(true);
             try {
                 const [
                     projectData,
@@ -432,6 +435,7 @@ const ProjectDetail: React.FC = () => {
                 }
             } catch (error) {
                 console.error("Failed to load project details:", error);
+                setProject(null);
             } finally {
                 setIsLoading(false);
             }

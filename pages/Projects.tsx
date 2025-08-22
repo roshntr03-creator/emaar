@@ -314,7 +314,7 @@ const Projects: React.FC = () => {
                 return (
                   <tr key={project.id} className="hover:bg-gray-50">
                     <td className="py-3 px-4 border-b">
-                       <Link to={`/projects/${project.id}`} className="text-blue-600 hover:underline font-semibold">
+                       <Link to={`/projects/${project.id}`} state={{ project: project }} className="text-blue-600 hover:underline font-semibold">
                         {project.name}
                       </Link>
                     </td>
