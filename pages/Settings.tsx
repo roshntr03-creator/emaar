@@ -1,9 +1,10 @@
 
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Building, Settings as SettingsIcon, Banknote, Bell, Shield, Loader2, Database, Download, AlertTriangle, Cloud, UploadCloud, KeyRound } from 'lucide-react';
 import type { User, AllRolesPermissions, SettingsData, PermissionAction, ModulePermissions, FirebaseConfig } from '../types';
 import * as localApi from '../api';
-import * as firebaseApi from '../api';
+import * as firebaseApi from '../firebase/api';
 import { isFirebaseConfigured, uploadLocalDataToFirestore } from '../firebase/config';
 import ApiKeyManager from '../components/settings/ApiKeyManager';
 import FirebaseConfigManager from '../components/settings/FirebaseConfigManager';

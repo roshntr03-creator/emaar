@@ -4,7 +4,9 @@ import type { Subcontract, SubcontractorPayment } from '../types';
 import { ArrowLeft, PlusCircle, Edit, Trash2, ClipboardSignature, Briefcase, Calendar, Percent, Loader2 } from 'lucide-react';
 import Modal from '../components/ui/Modal';
 import Card from '../components/ui/Card';
-import * as api from '../api';
+import * as localApi from '../api';
+import * as firebaseApi from '../firebase/api';
+import { isFirebaseConfigured } from '../firebase/config';
 
 const getStatusChip = (status: SubcontractorPayment['status'] | Subcontract['status']) => {
   const styles = {
@@ -31,6 +33,9 @@ const SubcontractDetail: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPayment, setEditingPayment] = useState<SubcontractorPayment | null>(null);
 
+  const usingFirebase = isFirebaseConfigured();
+  const api = usingFirebase ? firebaseApi : localApi;
+
   useEffect(() => {
     const fetchData = async (subcontractId: string) => {
         setIsLoading(true);
@@ -50,7 +55,7 @@ const SubcontractDetail: React.FC = () => {
     if (id) {
       fetchData(id);
     }
-  }, [id]);
+  }, [id, api]);
 
   const initialFormState: Omit<SubcontractorPayment, 'id' | 'subcontractId' | 'paymentNumber'> = {
     date: new Date().toISOString().split('T')[0],

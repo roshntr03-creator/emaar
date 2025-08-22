@@ -11,7 +11,7 @@ import Modal from '../components/ui/Modal';
 import AttachmentsManager from '../components/AttachmentsManager';
 import type { Project, BudgetLine, ProjectTask, ProjectFinancialTransaction } from '../types';
 import * as localApi from '../api';
-import * as firebaseApi from '../api';
+import * as firebaseApi from '../firebase/api';
 import { isFirebaseConfigured } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
 

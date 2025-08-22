@@ -399,7 +399,12 @@ export const getSubcontractorPayments = async (subcontractId: string): Promise<S
     const q = firebaseServices.db.collection('subcontractorPayments').where("subcontractId", "==", subcontractId);
     return getCollectionData('subcontractorPayments', q);
 };
-export const addSubcontractorPayment = (data: Omit<SubcontractorPayment, 'id'>): Promise<SubcontractorPayment> => addDocumentData('subcontractorPayments', data);
+export const addSubcontractorPayment = async (data: Omit<SubcontractorPayment, 'id' | 'paymentNumber'>): Promise<SubcontractorPayment> => {
+    const existingPayments = await getSubcontractorPayments(data.subcontractId);
+    const maxPaymentNum = Math.max(0, ...existingPayments.map(p => p.paymentNumber));
+    const newPaymentData = { ...data, paymentNumber: maxPaymentNum + 1 };
+    return addDocumentData('subcontractorPayments', newPaymentData);
+};
 export const updateSubcontractorPayment = (data: SubcontractorPayment): Promise<SubcontractorPayment> => updateDocumentData('subcontractorPayments', data);
 export const deleteSubcontractorPayment = (id: string): Promise<void> => deleteDocumentData('subcontractorPayments', id);
 
