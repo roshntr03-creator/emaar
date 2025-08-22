@@ -3,7 +3,10 @@ import { Link } from 'react-router-dom';
 import type { Subcontract, Project, Supplier, SubcontractorPayment } from '../types';
 import { PlusCircle, Search, Edit, Trash2, Filter, Loader2 } from 'lucide-react';
 import Modal from '../components/ui/Modal';
-import * as api from '../api';
+import * as localApi from '../api';
+import * as firebaseApi from '../firebase/api';
+import { isFirebaseConfigured } from '../firebase/config';
+import { useAuth } from '../contexts/AuthContext';
 
 const getStatusChip = (status: Subcontract['status']) => {
   const styles = {
@@ -31,6 +34,10 @@ const Subcontracts: React.FC = () => {
   const [editingSub, setEditingSub] = useState<Subcontract | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | Subcontract['status']>('all');
+  const { hasPermission } = useAuth();
+
+  const usingFirebase = isFirebaseConfigured();
+  const api = usingFirebase ? firebaseApi : localApi;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -53,7 +60,7 @@ const Subcontracts: React.FC = () => {
         }
     };
     fetchData();
-  }, []);
+  }, [usingFirebase]);
 
   const initialFormState: Omit<Subcontract, 'id'> = {
     projectId: '', projectName: '', subcontractorId: '', subcontractorName: '',
@@ -143,6 +150,10 @@ const Subcontracts: React.FC = () => {
       (statusFilter === 'all' || sub.status === statusFilter)
     ), [subcontracts, searchQuery, statusFilter]);
 
+  const canCreate = hasPermission('subcontracts', 'create');
+  const canEdit = hasPermission('subcontracts', 'edit');
+  const canDelete = hasPermission('subcontracts', 'delete');
+
   return (
     <>
       <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
@@ -153,9 +164,11 @@ const Subcontracts: React.FC = () => {
               <input type="text" placeholder="بحث..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full py-2 pl-10 pr-4 text-gray-700 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
               <span className="absolute inset-y-0 left-0 flex items-center pl-3"><Search className="w-5 h-5 text-gray-400" /></span>
             </div>
-            <button onClick={openAddModal} className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
-              <PlusCircle size={16} className="ml-2"/> إضافة عقد جديد
-            </button>
+            {canCreate && (
+                <button onClick={openAddModal} className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
+                    <PlusCircle size={16} className="ml-2"/> إضافة عقد جديد
+                </button>
+            )}
           </div>
         </div>
         
@@ -200,8 +213,8 @@ const Subcontracts: React.FC = () => {
                   <td className="py-3 px-4 border-b">{getStatusChip(sub.status)}</td>
                   <td className="py-3 px-4 border-b">
                     <div className="flex justify-center items-center space-x-2 space-x-reverse">
-                      <button onClick={() => openEditModal(sub)} className="text-blue-500 hover:text-blue-700 p-1"><Edit size={18}/></button>
-                      <button onClick={() => handleDelete(sub.id)} className="text-red-500 hover:text-red-700 p-1"><Trash2 size={18}/></button>
+                      {canEdit && <button onClick={() => openEditModal(sub)} className="text-blue-500 hover:text-blue-700 p-1"><Edit size={18}/></button>}
+                      {canDelete && <button onClick={() => handleDelete(sub.id)} className="text-red-500 hover:text-red-700 p-1"><Trash2 size={18}/></button>}
                     </div>
                   </td>
                 </tr>
