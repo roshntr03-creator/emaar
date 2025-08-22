@@ -414,23 +414,19 @@ const ProjectDetail: React.FC = () => {
     const [tasks, setTasks] = useState<ProjectTask[]>([]);
     const [financialTransactions, setFinancialTransactions] = useState<ProjectFinancialTransaction[]>([]);
 
-    const [isLoading, setIsLoading] = useState(!passedProject);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const fetchData = async (projectId: string) => {
             setIsLoading(true);
             try {
-                // If project data was NOT passed via state, fetch it.
-                // Otherwise, trust the passed data and only fetch related data.
-                const projectDataPromise = passedProject ? Promise.resolve(passedProject) : api.getProjectById(projectId);
-
                 const [
                     projectData,
                     budgetLinesData,
                     tasksData,
                     financialsData,
                 ] = await Promise.all([
-                    projectDataPromise,
+                    api.getProjectById(projectId),
                     api.getBudgetLinesForProject(projectId),
                     api.getTasksForProject(projectId),
                     api.getProjectFinancialTransactions(projectId),
@@ -458,7 +454,7 @@ const ProjectDetail: React.FC = () => {
             setIsLoading(false);
             setProject(null);
         }
-    }, [id, api, passedProject]);
+    }, [id, api]);
 
     // --- Budget Line Handlers ---
     const handleAddBudgetLine = async (data: Omit<BudgetLine, 'id' | 'projectId'>) => {
@@ -511,8 +507,8 @@ const ProjectDetail: React.FC = () => {
         return { ...summary, profitability };
     }, [financialTransactions]);
     
-    // The main project budget is now the sum of budget lines for accuracy
-    const projectBudget = useMemo(() => budgetLines.reduce((sum, item) => sum + item.budgetAmount, 0), [budgetLines]);
+    // The main project budget is its own field, not a sum of budget lines which might be incomplete.
+    const projectBudget = project?.budget || 0;
     const projectSpent = financialSummary.totalExpense;
     const progress = projectBudget > 0 ? Math.min(Math.round((projectSpent / projectBudget) * 100), 100) : 0;
     const remainingBudget = Math.max(0, projectBudget - projectSpent);
